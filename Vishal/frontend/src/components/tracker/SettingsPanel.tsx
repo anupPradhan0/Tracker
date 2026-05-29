@@ -140,7 +140,7 @@ export function SettingsPanel({
                 <p className="text-xs text-slate-500">
                   {emailConfigured
                     ? "Receive a summary with PDF attachment each week (via server cron)"
-                    : "Email is not configured on the server"}
+                    : "Enable after mail settings are saved in backend/.env"}
                 </p>
               </div>
             </label>

@@ -1,7 +1,4 @@
-import { config } from "dotenv";
 import { z } from "zod";
-
-config();
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -17,6 +14,7 @@ const envSchema = z.object({
   MAIL_PORT: z.coerce.number().default(587),
   MAIL_USER: z.string().optional(),
   MAIL_PASSWORD: z.string().optional(),
+  MAIL_FROM: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
   COHERE_MODEL: z.string().default("command-r-plus-08-2024"),

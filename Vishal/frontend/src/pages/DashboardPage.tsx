@@ -154,7 +154,7 @@ export function DashboardPage() {
             </Button>
             <SettingsPanel
               settings={settings}
-              emailConfigured={emailStatus?.configured ?? false}
+              emailConfigured={emailStatus?.ready ?? emailStatus?.configured ?? false}
               isSaving={updateSettings.isPending}
               onSave={(data) => updateSettings.mutate(data)}
             />
@@ -255,13 +255,9 @@ export function DashboardPage() {
                 <Button
                   variant="default"
                   className="w-full sm:w-auto"
-                  disabled={sendEmail.isPending || !emailStatus?.configured}
+                  disabled={sendEmail.isPending}
                   onClick={() => sendEmail.mutate(page.id)}
-                  title={
-                    emailStatus?.configured
-                      ? "Email weekly report with PDF"
-                      : "Configure MAIL_* env vars on server"
-                  }
+                  title="Email weekly report with PDF attachment"
                 >
                   <Mail className="h-4 w-4" />
                   {sendEmail.isPending ? "Sending…" : "Email report"}

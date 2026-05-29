@@ -121,10 +121,18 @@ export const trackerApi = {
     return unwrap(data);
   },
 
-  async getEmailStatus(): Promise<{ configured: boolean }> {
-    const { data } = await api.get<ApiSuccess<{ configured: boolean }>>(
-      "/api/tracker/email/status"
-    );
+  async getEmailStatus(): Promise<{
+    configured: boolean;
+    ready: boolean;
+    canSend?: boolean;
+  }> {
+    const { data } = await api.get<
+      ApiSuccess<{
+        configured: boolean;
+        ready: boolean;
+        canSend?: boolean;
+      }>
+    >("/api/tracker/email/status");
     return unwrap(data);
   },
 };
