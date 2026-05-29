@@ -1,6 +1,11 @@
 import { api } from "@/services/api";
 import type { ApiSuccess } from "@/types/api";
-import type { EntryFormData, TrackerPage, TrackerSettings } from "@/types/tracker";
+import type {
+  EntryFormData,
+  TrackerFolder,
+  TrackerPage,
+  TrackerSettings,
+} from "@/types/tracker";
 import { parseTagsInput } from "@/lib/trackerUtils";
 
 function unwrap<T>(data: ApiSuccess<T>): T {
@@ -21,6 +26,37 @@ export const trackerApi = {
     return unwrap(data);
   },
 
+  async listFolders(): Promise<TrackerFolder[]> {
+    const { data } = await api.get<ApiSuccess<TrackerFolder[]>>("/api/tracker/folders");
+    return unwrap(data);
+  },
+
+  async createFolder(payload?: {
+    name?: string;
+    parentFolderId?: string | null;
+  }): Promise<TrackerFolder> {
+    const { data } = await api.post<ApiSuccess<TrackerFolder>>(
+      "/api/tracker/folders",
+      payload ?? {}
+    );
+    return unwrap(data);
+  },
+
+  async updateFolder(
+    folderId: string,
+    payload: { name?: string; isExpanded?: boolean; parentFolderId?: string | null }
+  ): Promise<TrackerFolder> {
+    const { data } = await api.patch<ApiSuccess<TrackerFolder>>(
+      `/api/tracker/folders/${folderId}`,
+      payload
+    );
+    return unwrap(data);
+  },
+
+  async deleteFolder(folderId: string): Promise<void> {
+    await api.delete(`/api/tracker/folders/${folderId}`);
+  },
+
   async listPages(): Promise<TrackerPage[]> {
     const { data } = await api.get<ApiSuccess<TrackerPage[]>>("/api/tracker/pages");
     return unwrap(data);
@@ -36,7 +72,11 @@ export const trackerApi = {
     return unwrap(data);
   },
 
-  async createPage(payload?: { title?: string; icon?: string }): Promise<TrackerPage> {
+  async createPage(payload?: {
+    title?: string;
+    icon?: string;
+    folderId?: string;
+  }): Promise<TrackerPage> {
     const { data } = await api.post<ApiSuccess<TrackerPage>>("/api/tracker/pages", payload ?? {});
     return unwrap(data);
   },

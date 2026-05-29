@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
 import { calculatePageTotal, parseFixedExpenses } from "../utils/tracker.js";
+import { ensureDefaultFolderMigration, resolveFolderIdForNewPage } from "./folderService.js";
 import type {
   TrackerDayDto,
   TrackerEntryDto,
@@ -54,6 +55,7 @@ function mapPage(page: {
   id: string;
   title: string;
   icon: string;
+  folderId: string | null;
   createdAt: Date;
   updatedAt: Date;
   days: Array<{
@@ -82,6 +84,7 @@ function mapPage(page: {
     id: page.id,
     title: page.title,
     icon: page.icon,
+    folderId: page.folderId,
     days,
     pageTotal: calculatePageTotal(days),
     createdAt: page.createdAt.toISOString(),
@@ -123,6 +126,8 @@ export async function updateSettings(
 }
 
 export async function listPages(userId: string): Promise<TrackerPageDto[]> {
+  await ensureDefaultFolderMigration(userId);
+
   const pages = await prisma.trackerPage.findMany({
     where: { userId },
     include: pageInclude,
@@ -146,6 +151,8 @@ export async function getPage(userId: string, pageId: string): Promise<TrackerPa
 }
 
 export async function getOrCreateDefaultPage(userId: string): Promise<TrackerPageDto> {
+  await ensureDefaultFolderMigration(userId);
+
   const existing = await prisma.trackerPage.findFirst({
     where: { userId },
     include: pageInclude,
@@ -163,9 +170,12 @@ export async function createPage(
   userId: string,
   data: CreatePageInput
 ): Promise<TrackerPageDto> {
+  const folderId = await resolveFolderIdForNewPage(userId, data.folderId);
+
   const page = await prisma.trackerPage.create({
     data: {
       userId,
+      folderId,
       title: data.title ?? "Untitled Page",
       icon: data.icon ?? "📄",
       days: {

@@ -28,6 +28,7 @@ function mapPageFromDb(page: {
   id: string;
   title: string;
   icon: string;
+  folderId: string | null;
   createdAt: Date;
   updatedAt: Date;
   days: Array<{
@@ -66,6 +67,7 @@ function mapPageFromDb(page: {
     id: page.id,
     title: page.title,
     icon: page.icon,
+    folderId: page.folderId,
     days,
     pageTotal: calculatePageTotal(days),
     createdAt: page.createdAt.toISOString(),

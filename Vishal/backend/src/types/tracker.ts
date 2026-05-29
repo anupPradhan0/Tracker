@@ -16,10 +16,21 @@ export interface TrackerDayDto {
   entries: TrackerEntryDto[];
 }
 
+export interface TrackerFolderDto {
+  id: string;
+  name: string;
+  parentFolderId: string | null;
+  order: number;
+  isExpanded: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TrackerPageDto {
   id: string;
   title: string;
   icon: string;
+  folderId: string | null;
   days: TrackerDayDto[];
   pageTotal: number;
   createdAt: string;

@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createPageSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   icon: z.string().trim().max(8).optional(),
+  folderId: z.string().min(1).optional(),
 });
 
 export const updatePageSchema = z.object({

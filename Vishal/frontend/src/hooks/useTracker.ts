@@ -6,6 +6,7 @@ import type { EntryFormData } from "@/types/tracker";
 import { downloadBlob } from "@/lib/trackerUtils";
 
 const PAGES_KEY = ["tracker", "pages"] as const;
+const FOLDERS_KEY = ["tracker", "folders"] as const;
 const SETTINGS_KEY = ["tracker", "settings"] as const;
 
 export function pageQueryKey(pageId: string) {
@@ -19,10 +20,58 @@ export function useTrackerSettings() {
   });
 }
 
+export function useTrackerFolders() {
+  return useQuery({
+    queryKey: FOLDERS_KEY,
+    queryFn: trackerApi.listFolders,
+  });
+}
+
 export function useTrackerPages() {
   return useQuery({
     queryKey: PAGES_KEY,
     queryFn: trackerApi.listPages,
+  });
+}
+
+export function useCreateFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload?: { name?: string; parentFolderId?: string | null }) =>
+      trackerApi.createFolder(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
+      toast.success("Folder created");
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
+  });
+}
+
+export function useDeleteFolder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (folderId: string) => trackerApi.deleteFolder(folderId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
+      void queryClient.invalidateQueries({ queryKey: PAGES_KEY });
+      toast.success("Folder deleted");
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
+  });
+}
+
+export function useUpdateFolderExpanded() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ folderId, isExpanded }: { folderId: string; isExpanded: boolean }) =>
+      trackerApi.updateFolder(folderId, { isExpanded }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
   });
 }
 
@@ -38,7 +87,8 @@ export function useCreatePage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => trackerApi.createPage(),
+    mutationFn: (payload?: { folderId?: string; title?: string; icon?: string }) =>
+      trackerApi.createPage(payload),
     onSuccess: (page) => {
       queryClient.setQueryData(pageQueryKey(page.id), page);
       void queryClient.invalidateQueries({ queryKey: PAGES_KEY });

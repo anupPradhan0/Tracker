@@ -6,19 +6,23 @@ import { DayCard } from "@/components/tracker/DayCard";
 import { EntryDialog } from "@/components/tracker/EntryDialog";
 import { AiAssistantPanel } from "@/components/tracker/AiAssistantPanel";
 import { SettingsPanel } from "@/components/tracker/SettingsPanel";
-import { PageSidebar } from "@/components/tracker/PageSidebar";
+import { FolderSidebar } from "@/components/tracker/FolderSidebar";
 import { useAuth } from "@/providers/AuthProvider";
 import {
+  useCreateFolder,
   useCreatePage,
   useDeleteEntry,
+  useDeleteFolder,
   useDeletePage,
   useEmailStatus,
   useExportPdf,
   useSaveEntry,
   useSendWeeklyEmail,
+  useTrackerFolders,
   useTrackerPage,
   useTrackerPages,
   useTrackerSettings,
+  useUpdateFolderExpanded,
   useUpdatePageTitle,
   useUpdateSettings,
 } from "@/hooks/useTracker";
@@ -28,6 +32,8 @@ import { cn } from "@/lib/utils";
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
+  const { data: folders = [], isLoading: foldersLoading, refetch: refetchFolders } =
+    useTrackerFolders();
   const { data: pages = [], isLoading: pagesLoading, refetch: refetchPages } =
     useTrackerPages();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
@@ -41,7 +47,10 @@ export function DashboardPage() {
   const { data: settings } = useTrackerSettings();
   const { data: emailStatus } = useEmailStatus();
 
+  const createFolder = useCreateFolder();
   const createPage = useCreatePage();
+  const deleteFolder = useDeleteFolder();
+  const updateFolderExpanded = useUpdateFolderExpanded();
   const deletePage = useDeletePage();
   const updateTitle = useUpdatePageTitle();
   const saveEntry = useSaveEntry();
@@ -63,20 +72,38 @@ export function DashboardPage() {
   const didSeedPage = useRef(false);
 
   useEffect(() => {
-    if (pagesLoading) return;
+    if (pagesLoading || foldersLoading) return;
     if (pages.length === 0) {
       if (!didSeedPage.current) {
         didSeedPage.current = true;
-        createPage.mutate(undefined, {
-          onSuccess: (newPage) => setSelectedPageId(newPage.id),
-        });
+        const seedPage = (folderId?: string) => {
+          createPage.mutate(folderId ? { folderId } : undefined, {
+            onSuccess: (newPage) => setSelectedPageId(newPage.id),
+          });
+        };
+        if (folders.length === 0) {
+          createFolder.mutate(
+            { name: "My Folder" },
+            { onSuccess: (folder) => seedPage(folder.id) }
+          );
+        } else {
+          seedPage(folders[0]!.id);
+        }
       }
       return;
     }
     if (!selectedPageId || !pages.some((p) => p.id === selectedPageId)) {
       setSelectedPageId(pages[0]!.id);
     }
-  }, [pages, pagesLoading, selectedPageId, createPage.mutate]);
+  }, [
+    pages,
+    folders,
+    pagesLoading,
+    foldersLoading,
+    selectedPageId,
+    createPage.mutate,
+    createFolder.mutate,
+  ]);
 
   useEffect(() => {
     if (page) {
@@ -101,7 +128,11 @@ export function DashboardPage() {
     return () => clearTimeout(t);
   }, [title, saveTitleDebounced]);
 
-  const isLoading = pagesLoading || pageLoading || (pages.length === 0 && createPage.isPending);
+  const isLoading =
+    pagesLoading ||
+    foldersLoading ||
+    pageLoading ||
+    (pages.length === 0 && (createPage.isPending || createFolder.isPending));
 
   if (isLoading) {
     return (
@@ -117,6 +148,7 @@ export function DashboardPage() {
         <p className="text-slate-600">Could not load your tracker.</p>
         <Button
           onClick={() => {
+            void refetchFolders();
             void refetchPages();
             void refetchPage();
           }}
@@ -173,18 +205,40 @@ export function DashboardPage() {
       </header>
 
       <div className="mx-auto flex max-w-7xl flex-col md:flex-row">
-        <PageSidebar
+        <FolderSidebar
+          folders={folders}
           pages={pages}
           activePageId={selectedPageId}
-          isCreating={createPage.isPending}
-          isDeleting={deletePage.isPending}
-          onSelect={setSelectedPageId}
-          onCreate={() =>
-            createPage.mutate(undefined, {
-              onSuccess: (newPage) => setSelectedPageId(newPage.id),
+          isCreatingFolder={createFolder.isPending}
+          isCreatingPage={createPage.isPending}
+          isDeletingFolder={deleteFolder.isPending}
+          isDeletingPage={deletePage.isPending}
+          onSelectPage={setSelectedPageId}
+          onCreateFolder={(parentFolderId) =>
+            createFolder.mutate(
+              parentFolderId != null ? { parentFolderId } : {}
+            )
+          }
+          onDeleteFolder={(folderId) =>
+            deleteFolder.mutate(folderId, {
+              onSuccess: async () => {
+                const { data: freshPages } = await refetchPages();
+                if (!freshPages?.some((p) => p.id === selectedPageId)) {
+                  setSelectedPageId(freshPages?.[0]?.id ?? null);
+                }
+              },
             })
           }
-          onDelete={(pageId) =>
+          onToggleFolderExpanded={(folderId, isExpanded) =>
+            updateFolderExpanded.mutate({ folderId, isExpanded })
+          }
+          onCreatePage={(folderId) =>
+            createPage.mutate(
+              { folderId },
+              { onSuccess: (newPage) => setSelectedPageId(newPage.id) }
+            )
+          }
+          onDeletePage={(pageId) =>
             deletePage.mutate(pageId, {
               onSuccess: () => {
                 const remaining = pages.filter((p) => p.id !== pageId);

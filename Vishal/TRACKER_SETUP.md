@@ -12,16 +12,18 @@ This document covers the tracker features ported from the Anup reference project
 Vishal/
 ├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma              # TrackerPage, TrackerDay, TrackerEntry, TrackerSettings
+│   │   ├── schema.prisma              # TrackerFolder, TrackerPage, TrackerDay, TrackerEntry, TrackerSettings
 │   │   └── migrations/20250529140000_tracker/
 │   └── src/
 │       ├── controllers/
 │       │   ├── trackerController.ts
+│       │   ├── folderController.ts
 │       │   ├── exportController.ts
 │       │   ├── emailController.ts
 │       │   └── cronController.ts
 │       ├── services/
 │       │   ├── trackerService.ts
+│       │   ├── folderService.ts
 │       │   ├── pdfService.ts
 │       │   ├── emailService.ts
 │       │   └── weeklyReportService.ts
@@ -117,14 +119,23 @@ All `/tracker/*` routes require auth cookie (`auth_token`).
 | GET | `/tracker/settings` | — | `{ currency, monthlyBudget, weeklyReportsEnabled }` |
 | PATCH | `/tracker/settings` | partial settings | same |
 
+### Folders
+
+| Method | Path | Body | Description |
+|--------|------|------|-------------|
+| GET | `/tracker/folders` | — | List folders (auto-migrates orphan pages into **My Folder**) |
+| POST | `/tracker/folders` | `{ name?, parentFolderId? }` | Create folder (default name: New Folder) |
+| PATCH | `/tracker/folders/:id` | `{ name?, isExpanded?, parentFolderId? }` | Update folder |
+| DELETE | `/tracker/folders/:id` | — | Delete folder recursively (nested folders + pages) |
+
 ### Pages
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/tracker/pages` | List all pages |
+| GET | `/tracker/pages` | List all pages (includes `folderId`) |
 | GET | `/tracker/pages/default` | Get or create first page (7 empty days) |
 | GET | `/tracker/pages/:id` | Get page by id |
-| POST | `/tracker/pages` | `{ title?, icon? }` |
+| POST | `/tracker/pages` | `{ title?, icon?, folderId? }` — `folderId` required if no folders exist; otherwise uses first root folder |
 | PATCH | `/tracker/pages/:id` | `{ title?, icon? }` |
 | DELETE | `/tracker/pages/:id` | Delete page |
 
