@@ -36,7 +36,7 @@ export function DayCard({
       )}
     >
       <header
-        className="flex cursor-pointer items-center justify-between gap-2 p-4"
+        className="flex cursor-pointer flex-wrap items-center justify-between gap-x-2 gap-y-2 p-4"
         onClick={onToggle}
         role="button"
         tabIndex={0}
@@ -65,11 +65,12 @@ export function DayCard({
           <Button
             variant="outline"
             size="default"
-            className="h-8 px-2 text-xs sm:px-3"
+            className="h-9 px-2 text-xs sm:h-8 sm:px-3"
             onClick={(e) => {
               e.stopPropagation();
               onAdd();
             }}
+            aria-label="Add entry"
           >
             <Plus className="h-3.5 w-3.5 sm:mr-1" />
             <span className="hidden sm:inline">Add</span>
@@ -86,7 +87,7 @@ export function DayCard({
               {day.entries.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex items-start justify-between gap-2 rounded-xl bg-slate-50/80 px-3 py-2.5 transition-colors hover:bg-indigo-50/50"
+                  className="flex flex-col gap-2 rounded-xl bg-slate-50/80 px-3 py-2.5 transition-colors hover:bg-indigo-50/50 sm:flex-row sm:items-start sm:justify-between"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -110,7 +111,7 @@ export function DayCard({
                       </p>
                     )}
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="flex w-full shrink-0 items-center justify-between gap-1 sm:w-auto sm:justify-start">
                     <span className="text-sm font-semibold text-slate-900">
                       {formatCurrency(entry.amount, currency)}
                     </span>

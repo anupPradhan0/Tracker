@@ -143,7 +143,7 @@ export function EntryDialog({
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
               placeholder="comma separated"
             />
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {QUICK_TAGS.map((tag) => {
                 const active = tagsArr.includes(tag);
                 return (

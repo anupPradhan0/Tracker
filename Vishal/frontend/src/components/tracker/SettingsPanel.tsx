@@ -55,7 +55,7 @@ export function SettingsPanel({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent onClose={() => setOpen(false)} className="relative max-h-[90vh] overflow-y-auto">
+        <DialogContent onClose={() => setOpen(false)} className="relative">
           <DialogHeader>
             <DialogTitle>Tracker settings</DialogTitle>
           </DialogHeader>
@@ -105,23 +105,25 @@ export function SettingsPanel({
                   ))}
                 </ul>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   placeholder="Title"
                   value={newExpenseTitle}
                   onChange={(e) => setNewExpenseTitle(e.target.value)}
                 />
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Amount"
-                  className="w-28"
-                  value={newExpenseAmount}
-                  onChange={(e) => setNewExpenseAmount(e.target.value)}
-                />
-                <Button type="button" variant="outline" size="icon" onClick={addFixedExpense}>
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Amount"
+                    className="w-full sm:w-28"
+                    value={newExpenseAmount}
+                    onChange={(e) => setNewExpenseAmount(e.target.value)}
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={addFixedExpense}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 

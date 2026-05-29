@@ -53,8 +53,8 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
       />
       <aside
         className={cn(
-          "absolute right-0 top-0 flex h-full w-full flex-col bg-white shadow-2xl",
-          "animate-fade-in sm:max-w-md"
+          "absolute right-0 top-0 flex h-full w-full flex-col bg-white pt-safe pb-safe shadow-2xl",
+          "animate-fade-in md:max-w-md"
         )}
       >
         <div className="flex items-center justify-between border-b border-slate-100 p-4">

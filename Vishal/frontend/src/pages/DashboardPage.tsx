@@ -137,12 +137,12 @@ export function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/40 to-violet-50/30">
       <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2 font-semibold text-indigo-700">
-            <Wallet className="h-5 w-5" />
-            <span className="hidden sm:inline">Finance Tracker</span>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
+          <div className="flex min-w-0 items-center gap-2 font-semibold text-indigo-700">
+            <Wallet className="h-5 w-5 shrink-0" />
+            <span className="truncate text-sm sm:text-base">Finance Tracker</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -160,12 +160,13 @@ export function DashboardPage() {
             />
             <Button
               variant="outline"
+              size="icon"
               onClick={() => logout.mutate()}
               disabled={logout.isPending}
-              className="hidden sm:inline-flex"
+              aria-label="Logout"
+              title="Logout"
             >
               <LogOut className="h-4 w-4" />
-              Logout
             </Button>
           </div>
         </div>
@@ -193,23 +194,23 @@ export function DashboardPage() {
           }
         />
 
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">
+        <main className="min-w-0 flex-1 px-3 py-4 pb-safe sm:px-6 sm:py-8">
           <section
             className={cn(
-              "mb-8 rounded-2xl border p-5 shadow-lg transition-shadow sm:p-6",
+              "mb-6 rounded-2xl border p-4 shadow-lg transition-shadow sm:mb-8 sm:p-6",
               "border-indigo-100/80 bg-white/90",
               "hover:shadow-xl"
             )}
           >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 max-w-full flex-1">
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="text-3xl">{page.icon}</span>
+                  <span className="shrink-0 text-2xl sm:text-3xl">{page.icon}</span>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="min-w-0 flex-1 truncate border-none bg-transparent text-xl font-bold text-slate-900 outline-none focus:ring-0 sm:text-2xl"
+                    className="min-w-0 flex-1 truncate border-none bg-transparent text-lg font-bold text-slate-900 outline-none focus:ring-0 sm:text-2xl"
                     placeholder="Untitled Page"
                   />
                 </div>
@@ -234,14 +235,15 @@ export function DashboardPage() {
                     <span className="text-xs text-slate-400">Saving title…</span>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 truncate text-xs text-slate-500">
                   Signed in as {user?.name} · {user?.email}
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                 <Button
                   variant="outline"
+                  className="w-full sm:w-auto"
                   disabled={exportPdf.isPending}
                   onClick={() =>
                     exportPdf.mutate({ pageId: page.id, title: page.title })
@@ -252,6 +254,7 @@ export function DashboardPage() {
                 </Button>
                 <Button
                   variant="default"
+                  className="w-full sm:w-auto"
                   disabled={sendEmail.isPending || !emailStatus?.configured}
                   onClick={() => sendEmail.mutate(page.id)}
                   title={
@@ -267,7 +270,7 @@ export function DashboardPage() {
             </div>
 
             {(settings?.monthlyBudget ?? 0) > 0 && (
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-4">
+              <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <p className="text-slate-500">Monthly budget</p>
                   <p className="font-semibold">
@@ -288,7 +291,7 @@ export function DashboardPage() {
                     {formatCurrency(budgetStatus.weeklyBudget, currency)}
                   </p>
                 </div>
-                <div className="col-span-2 sm:col-span-1">
+                <div>
                   <p className="text-slate-500">Entries this week</p>
                   <p className="font-semibold">
                     {page.days.reduce((n, d) => n + d.entries.length, 0)}
@@ -298,7 +301,7 @@ export function DashboardPage() {
             )}
           </section>
 
-          <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
             {page.days.map((day) => (
               <DayCard
                 key={day.id}
@@ -354,16 +357,6 @@ export function DashboardPage() {
         }}
       />
 
-      <div className="fixed bottom-4 right-4 sm:hidden">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => logout.mutate()}
-          aria-label="Logout"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
-      </div>
     </div>
   );
 }

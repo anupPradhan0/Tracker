@@ -46,7 +46,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout>
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen items-start justify-center p-3 pt-8 sm:items-center sm:p-4 sm:pt-4">
         <AuthCard
           title="Create your account"
           description="Start managing your finances with confidence"

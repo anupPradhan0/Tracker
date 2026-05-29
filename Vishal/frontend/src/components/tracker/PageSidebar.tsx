@@ -39,7 +39,7 @@ export function PageSidebar({
         </Button>
       </div>
 
-      <nav className="flex gap-2 overflow-x-auto p-2 md:flex-col md:overflow-x-visible md:overflow-y-auto md:p-2">
+      <nav className="flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-px-2 p-2 [-webkit-overflow-scrolling:touch] md:flex-col md:snap-none md:overflow-x-visible md:overflow-y-auto md:p-2">
         {pages.map((page) => {
           const isActive = page.id === activePageId;
           const entryCount = page.days.reduce((n, d) => n + d.entries.length, 0);
@@ -48,7 +48,7 @@ export function PageSidebar({
             <div
               key={page.id}
               className={cn(
-                "group flex min-w-[140px] shrink-0 items-center gap-1 rounded-xl border px-2 py-1.5 transition-colors md:min-w-0",
+                "group flex min-h-11 min-w-[min(100%,9rem)] shrink-0 snap-start items-center gap-1 rounded-xl border px-2 py-1.5 transition-colors md:min-w-0",
                 isActive
                   ? "border-indigo-200 bg-indigo-50"
                   : "border-transparent hover:border-slate-200 hover:bg-slate-50"
@@ -73,7 +73,7 @@ export function PageSidebar({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                  className="h-7 w-7 shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                   disabled={isDeleting}
                   onClick={() => {
                     if (
