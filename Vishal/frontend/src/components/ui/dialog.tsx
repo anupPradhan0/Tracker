@@ -36,7 +36,7 @@ export function DialogContent({
   return (
     <div
       className={cn(
-        "max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900",
+        "max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl",
         className
       )}
       role="dialog"
@@ -46,7 +46,7 @@ export function DialogContent({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+          className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
@@ -63,7 +63,7 @@ export function DialogHeader({ className, children }: React.HTMLAttributes<HTMLD
 
 export function DialogTitle({ className, children }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h2 className={cn("text-lg font-semibold text-slate-900 dark:text-slate-100", className)}>
+    <h2 className={cn("text-lg font-semibold text-slate-900", className)}>
       {children}
     </h2>
   );

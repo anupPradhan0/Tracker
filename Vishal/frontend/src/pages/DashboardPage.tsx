@@ -135,10 +135,10 @@ export function DashboardPage() {
   const editingDayLabel = editing != null ? getDayLabel(editing.dayIndex) : "";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/40 to-violet-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
-      <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/40 to-violet-50/30">
+      <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2 font-semibold text-indigo-700 dark:text-indigo-300">
+          <div className="flex items-center gap-2 font-semibold text-indigo-700">
             <Wallet className="h-5 w-5" />
             <span className="hidden sm:inline">Finance Tracker</span>
           </div>
@@ -197,7 +197,7 @@ export function DashboardPage() {
           <section
             className={cn(
               "mb-8 rounded-2xl border p-5 shadow-lg transition-shadow sm:p-6",
-              "border-indigo-100/80 bg-white/90 dark:border-indigo-900/50 dark:bg-slate-900/90",
+              "border-indigo-100/80 bg-white/90",
               "hover:shadow-xl"
             )}
           >
@@ -209,14 +209,14 @@ export function DashboardPage() {
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="min-w-0 flex-1 truncate border-none bg-transparent text-xl font-bold text-slate-900 outline-none focus:ring-0 sm:text-2xl dark:text-white"
+                    className="min-w-0 flex-1 truncate border-none bg-transparent text-xl font-bold text-slate-900 outline-none focus:ring-0 sm:text-2xl"
                     placeholder="Untitled Page"
                   />
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
                   <span>
                     Total:{" "}
-                    <strong className="text-indigo-700 dark:text-indigo-300">
+                    <strong className="text-indigo-700">
                       {formatCurrency(page.pageTotal, currency)}
                     </strong>
                   </span>
@@ -224,8 +224,8 @@ export function DashboardPage() {
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-medium",
                       budgetStatus.isOverBudget
-                        ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                        : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-emerald-100 text-emerald-700"
                     )}
                   >
                     Status: {budgetStatus.label}
@@ -267,7 +267,7 @@ export function DashboardPage() {
             </div>
 
             {(settings?.monthlyBudget ?? 0) > 0 && (
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-4 dark:border-slate-800">
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-4">
                 <div>
                   <p className="text-slate-500">Monthly budget</p>
                   <p className="font-semibold">

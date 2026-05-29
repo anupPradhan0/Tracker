@@ -23,8 +23,8 @@ export function PageSidebar({
   onDelete,
 }: PageSidebarProps) {
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-indigo-100/80 bg-white/90 dark:border-slate-800 dark:bg-slate-900/90 md:w-56 md:border-b-0 md:border-r lg:w-64">
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-3 dark:border-slate-800">
+    <aside className="flex w-full shrink-0 flex-col border-b border-indigo-100/80 bg-white/90 md:w-56 md:border-b-0 md:border-r lg:w-64">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pages</p>
         <Button
           variant="outline"
@@ -50,8 +50,8 @@ export function PageSidebar({
               className={cn(
                 "group flex min-w-[140px] shrink-0 items-center gap-1 rounded-xl border px-2 py-1.5 transition-colors md:min-w-0",
                 isActive
-                  ? "border-indigo-200 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-950/50"
-                  : "border-transparent hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50"
+                  ? "border-indigo-200 bg-indigo-50"
+                  : "border-transparent hover:border-slate-200 hover:bg-slate-50"
               )}
             >
               <button
@@ -61,7 +61,7 @@ export function PageSidebar({
               >
                 <span className="flex items-center gap-1.5">
                   <span className="text-base leading-none">{page.icon}</span>
-                  <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <span className="truncate text-sm font-medium text-slate-800">
                     {page.title}
                   </span>
                 </span>

@@ -54,25 +54,25 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
       <aside
         className={cn(
           "absolute right-0 top-0 flex h-full w-full flex-col bg-white shadow-2xl",
-          "animate-fade-in dark:bg-slate-900 sm:max-w-md"
+          "animate-fade-in sm:max-w-md"
         )}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 p-4 dark:border-slate-800">
+        <div className="flex items-center justify-between border-b border-slate-100 p-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">AI Assistant</h2>
+            <h2 className="text-lg font-bold text-slate-900">AI Assistant</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
             <X className="h-5 w-5" />
           </Button>
         </div>
 
-        <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <div className="border-b border-slate-100 px-4 py-3">
           <p className="text-xs text-slate-500">
             Powered by{" "}
             <span className="font-medium text-indigo-600">Cohere</span>
             {aiStatus?.configured ? (
-              <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+              <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">
                 Connected
               </span>
             ) : (
@@ -83,7 +83,7 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
           </p>
         </div>
 
-        <div className="flex gap-1 border-b border-slate-100 p-2 dark:border-slate-800">
+        <div className="flex gap-1 border-b border-slate-100 p-2">
           {(["daily", "weekly"] as const).map((t) => (
             <button
               key={t}
@@ -93,7 +93,7 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
                 "flex-1 rounded-lg py-2 text-sm font-medium capitalize transition-colors",
                 tab === t
                   ? "bg-indigo-600 text-white"
-                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                  : "text-slate-600 hover:bg-slate-100"
               )}
             >
               {t}
@@ -145,7 +145,7 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
                 <select
                   value={selectedDay}
                   onChange={(e) => setSelectedDay(Number(e.target.value))}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
                 >
                   {[1, 2, 3, 4, 5, 6, 7].map((d) => (
                     <option key={d} value={d}>
@@ -202,7 +202,7 @@ function SummaryCard({ summary, currency }: { summary: AISummary; currency: stri
     summary.dayIndex != null ? ` · ${getDayLabel(summary.dayIndex)}` : "";
 
   return (
-    <Card className="border-slate-200/80 dark:border-slate-700">
+    <Card className="border-slate-200/80">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
@@ -213,18 +213,18 @@ function SummaryCard({ summary, currency }: { summary: AISummary; currency: stri
         </div>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <div className="flex items-center justify-between rounded-lg bg-indigo-50/80 px-3 py-2 dark:bg-indigo-950/40">
-          <span className="text-slate-600 dark:text-slate-400">Total spent</span>
+        <div className="flex items-center justify-between rounded-lg bg-indigo-50/80 px-3 py-2">
+          <span className="text-slate-600">Total spent</span>
           <span className="font-semibold">{formatCurrency(summary.totalSpent, currency)}</span>
         </div>
-        <p className="text-slate-700 dark:text-slate-300">{summary.summary}</p>
+        <p className="text-slate-700">{summary.summary}</p>
         {summary.insights.length > 0 && (
           <div>
-            <div className="mb-1 flex items-center gap-1 font-medium text-slate-800 dark:text-slate-200">
+            <div className="mb-1 flex items-center gap-1 font-medium text-slate-800">
               <TrendingUp className="h-3.5 w-3.5" />
               Insights
             </div>
-            <ul className="space-y-1 text-slate-600 dark:text-slate-400">
+            <ul className="space-y-1 text-slate-600">
               {summary.insights.map((item, i) => (
                 <li key={i} className="flex gap-2">
                   <span>•</span>
@@ -236,11 +236,11 @@ function SummaryCard({ summary, currency }: { summary: AISummary; currency: stri
         )}
         {summary.recommendations.length > 0 && (
           <div>
-            <div className="mb-1 flex items-center gap-1 font-medium text-slate-800 dark:text-slate-200">
+            <div className="mb-1 flex items-center gap-1 font-medium text-slate-800">
               <Lightbulb className="h-3.5 w-3.5" />
               Recommendations
             </div>
-            <ul className="space-y-1 text-slate-600 dark:text-slate-400">
+            <ul className="space-y-1 text-slate-600">
               {summary.recommendations.map((item, i) => (
                 <li key={i} className="flex gap-2">
                   <span>•</span>

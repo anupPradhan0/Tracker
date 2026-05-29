@@ -85,7 +85,7 @@ export function SettingsPanel({
                   {fixedExpenses.map((expense, index) => (
                     <li
                       key={`${expense.title}-${index}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-2 py-1.5 text-sm dark:border-slate-700"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
                     >
                       <span className="truncate">
                         {expense.title} — {currency}
@@ -125,7 +125,7 @@ export function SettingsPanel({
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3">
               <input
                 type="checkbox"
                 checked={weeklyReports}
