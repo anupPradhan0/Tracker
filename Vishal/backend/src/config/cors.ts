@@ -18,6 +18,23 @@ function buildAllowedOrigins(): Set<string> {
 
 const allowedOrigins = buildAllowedOrigins();
 
+/** Vite may use 5174+ when 5173 is taken; the dev proxy still forwards Origin. */
+function isLocalDevOrigin(origin: string): boolean {
+  if (env.NODE_ENV !== "development") {
+    return false;
+  }
+
+  try {
+    const { protocol, hostname } = new URL(origin);
+    return (
+      (protocol === "http:" || protocol === "https:") &&
+      (hostname === "localhost" || hostname === "127.0.0.1")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export const corsMiddleware = cors({
   origin(origin, callback) {
     // Non-browser clients (curl, server-to-server) omit Origin.
@@ -26,7 +43,7 @@ export const corsMiddleware = cors({
       return;
     }
 
-    if (allowedOrigins.has(origin)) {
+    if (allowedOrigins.has(origin) || isLocalDevOrigin(origin)) {
       callback(null, origin);
       return;
     }
