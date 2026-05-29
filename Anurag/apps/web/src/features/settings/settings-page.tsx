@@ -87,12 +87,12 @@ export function SettingsPage() {
   });
 
   const saveEmailSettings = useMutation({
-    mutationFn: () =>
+    mutationFn: (): Promise<EmailSettingsDto> =>
       apiPatch<EmailSettingsDto>("/users/me/email-settings", {
         reportSenderEmail: senderEmail.trim() || null,
         reportReceiverEmail: receiverEmail.trim() || null,
       }),
-    onSuccess: (data) => {
+    onSuccess: (data: EmailSettingsDto) => {
       qc.invalidateQueries({ queryKey: ["email-settings"] });
       if (user && accessToken) {
         setAuth(

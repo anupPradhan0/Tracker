@@ -79,31 +79,36 @@ apiClient.interceptors.response.use(
   }
 );
 
+/** Returns `{ data, meta }` — use `.data` for the payload (unlike post/patch/put/delete). */
 export async function apiGet<T>(url: string, params?: Record<string, unknown>) {
   const { data } = await apiClient.get<ApiResponse<T>>(url, { params });
   if (!data.success) throw new Error(data.error.message);
   return { data: data.data, meta: "meta" in data ? data.meta : undefined };
 }
 
-export async function apiPost<T>(url: string, body?: unknown) {
+/** Returns the API payload directly (`response.data.data`), not an Axios response. */
+export async function apiPost<T>(url: string, body?: unknown): Promise<T> {
   const { data } = await apiClient.post<ApiResponse<T>>(url, body);
   if (!data.success) throw new Error(data.error.message);
   return data.data;
 }
 
-export async function apiPatch<T>(url: string, body?: unknown) {
+/** Returns the API payload directly (`response.data.data`), not an Axios response. */
+export async function apiPatch<T>(url: string, body?: unknown): Promise<T> {
   const { data } = await apiClient.patch<ApiResponse<T>>(url, body);
   if (!data.success) throw new Error(data.error.message);
   return data.data;
 }
 
-export async function apiPut<T>(url: string, body?: unknown) {
+/** Returns the API payload directly (`response.data.data`), not an Axios response. */
+export async function apiPut<T>(url: string, body?: unknown): Promise<T> {
   const { data } = await apiClient.put<ApiResponse<T>>(url, body);
   if (!data.success) throw new Error(data.error.message);
   return data.data;
 }
 
-export async function apiDelete<T>(url: string) {
+/** Returns the API payload directly (`response.data.data`), not an Axios response. */
+export async function apiDelete<T>(url: string): Promise<T> {
   const { data } = await apiClient.delete<ApiResponse<T>>(url);
   if (!data.success) throw new Error(data.error.message);
   return data.data;
