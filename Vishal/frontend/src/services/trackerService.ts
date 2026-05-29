@@ -1,6 +1,7 @@
 import { api } from "@/services/api";
 import type { ApiSuccess } from "@/types/api";
 import type {
+  CreateFolderResult,
   EntryFormData,
   TrackerFolder,
   TrackerPage,
@@ -33,9 +34,10 @@ export const trackerApi = {
 
   async createFolder(payload?: {
     name?: string;
+    pageTitle?: string;
     parentFolderId?: string | null;
-  }): Promise<TrackerFolder> {
-    const { data } = await api.post<ApiSuccess<TrackerFolder>>(
+  }): Promise<CreateFolderResult> {
+    const { data } = await api.post<ApiSuccess<CreateFolderResult>>(
       "/api/tracker/folders",
       payload ?? {}
     );

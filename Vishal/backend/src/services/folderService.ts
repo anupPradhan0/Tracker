@@ -1,7 +1,8 @@
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
-import type { TrackerFolderDto } from "../types/tracker.js";
+import type { CreateFolderResultDto, TrackerFolderDto } from "../types/tracker.js";
 import type { CreateFolderInput, UpdateFolderInput } from "../validators/folder.validator.js";
+import { mapPage, pageInclude } from "./trackerPageMapper.js";
 
 function mapFolder(folder: {
   id: string;
@@ -92,7 +93,7 @@ export async function listFolders(userId: string): Promise<TrackerFolderDto[]> {
 export async function createFolder(
   userId: string,
   data: CreateFolderInput
-): Promise<TrackerFolderDto> {
+): Promise<CreateFolderResultDto> {
   const parentFolderId = data.parentFolderId ?? null;
 
   if (parentFolderId) {
@@ -101,17 +102,37 @@ export async function createFolder(
 
   const order = await getSiblingMaxOrder(userId, parentFolderId);
 
-  const folder = await prisma.trackerFolder.create({
-    data: {
-      userId,
-      name: data.name ?? "New Folder",
-      parentFolderId,
-      order,
-      isExpanded: true,
-    },
-  });
+  return prisma.$transaction(async (tx) => {
+    const folder = await tx.trackerFolder.create({
+      data: {
+        userId,
+        name: data.name ?? "New Folder",
+        parentFolderId,
+        order,
+        isExpanded: true,
+      },
+    });
 
-  return mapFolder(folder);
+    const page = await tx.trackerPage.create({
+      data: {
+        userId,
+        folderId: folder.id,
+        title: data.pageTitle ?? "Untitled Page",
+        icon: "📄",
+        days: {
+          create: Array.from({ length: 7 }, (_, i) => ({
+            dayIndex: i + 1,
+          })),
+        },
+      },
+      include: pageInclude,
+    });
+
+    return {
+      folder: mapFolder(folder),
+      page: mapPage(page),
+    };
+  });
 }
 
 export async function updateFolder(

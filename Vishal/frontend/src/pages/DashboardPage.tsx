@@ -10,7 +10,6 @@ import { FolderSidebar } from "@/components/tracker/FolderSidebar";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   useCreateFolder,
-  useCreatePage,
   useDeleteEntry,
   useDeleteFolder,
   useDeletePage,
@@ -23,6 +22,7 @@ import {
   useTrackerPages,
   useTrackerSettings,
   useUpdateFolderExpanded,
+  useUpdateFolderName,
   useUpdatePageTitle,
   useUpdateSettings,
 } from "@/hooks/useTracker";
@@ -48,9 +48,9 @@ export function DashboardPage() {
   const { data: emailStatus } = useEmailStatus();
 
   const createFolder = useCreateFolder();
-  const createPage = useCreatePage();
   const deleteFolder = useDeleteFolder();
   const updateFolderExpanded = useUpdateFolderExpanded();
+  const updateFolderName = useUpdateFolderName();
   const deletePage = useDeletePage();
   const updateTitle = useUpdatePageTitle();
   const saveEntry = useSaveEntry();
@@ -70,25 +70,22 @@ export function DashboardPage() {
   const currency = settings?.currency ?? "₹";
   const fixedExpenses = settings?.fixedExpenses ?? [];
   const didSeedPage = useRef(false);
+  const expandAllDaysPageId = useRef<string | null>(null);
 
   useEffect(() => {
     if (pagesLoading || foldersLoading) return;
     if (pages.length === 0) {
       if (!didSeedPage.current) {
         didSeedPage.current = true;
-        const seedPage = (folderId?: string) => {
-          createPage.mutate(folderId ? { folderId } : undefined, {
-            onSuccess: (newPage) => setSelectedPageId(newPage.id),
-          });
-        };
-        if (folders.length === 0) {
-          createFolder.mutate(
-            { name: "My Folder" },
-            { onSuccess: (folder) => seedPage(folder.id) }
-          );
-        } else {
-          seedPage(folders[0]!.id);
-        }
+        createFolder.mutate(
+          { name: "My Folder", pageTitle: "Untitled Page" },
+          {
+            onSuccess: (result) => {
+              expandAllDaysPageId.current = result.page.id;
+              setSelectedPageId(result.page.id);
+            },
+          }
+        );
       }
       return;
     }
@@ -97,11 +94,9 @@ export function DashboardPage() {
     }
   }, [
     pages,
-    folders,
     pagesLoading,
     foldersLoading,
     selectedPageId,
-    createPage.mutate,
     createFolder.mutate,
   ]);
 
@@ -110,13 +105,23 @@ export function DashboardPage() {
       setTitle(page.title);
       setExpandedDays((prev) => {
         const next = { ...prev };
-        for (const day of page.days) {
-          if (next[day.dayIndex] === undefined) next[day.dayIndex] = false;
+        const expandAll = expandAllDaysPageId.current === page.id;
+        if (expandAll) {
+          expandAllDaysPageId.current = null;
+          for (const day of page.days) {
+            next[day.dayIndex] = true;
+          }
+        } else {
+          for (const day of page.days) {
+            if (next[day.dayIndex] === undefined) {
+              next[day.dayIndex] = day.dayIndex === 1;
+            }
+          }
         }
         return next;
       });
     }
-  }, [page?.id]);
+  }, [page?.id, page?.title]);
 
   const saveTitleDebounced = useCallback(() => {
     if (!page || title === page.title) return;
@@ -132,7 +137,7 @@ export function DashboardPage() {
     pagesLoading ||
     foldersLoading ||
     pageLoading ||
-    (pages.length === 0 && (createPage.isPending || createFolder.isPending));
+    (pages.length === 0 && createFolder.isPending);
 
   if (isLoading) {
     return (
@@ -210,13 +215,30 @@ export function DashboardPage() {
           pages={pages}
           activePageId={selectedPageId}
           isCreatingFolder={createFolder.isPending}
-          isCreatingPage={createPage.isPending}
+          isRenamingFolder={updateFolderName.isPending}
+          isRenamingPage={updateTitle.isPending}
           isDeletingFolder={deleteFolder.isPending}
           isDeletingPage={deletePage.isPending}
           onSelectPage={setSelectedPageId}
-          onCreateFolder={(parentFolderId) =>
-            createFolder.mutate(
-              parentFolderId != null ? { parentFolderId } : {}
+          onCreateFolder={(payload) =>
+            createFolder.mutate(payload, {
+              onSuccess: (result) => {
+                expandAllDaysPageId.current = result.page.id;
+                setSelectedPageId(result.page.id);
+              },
+            })
+          }
+          onRenameFolder={(folderId, name) =>
+            updateFolderName.mutate({ folderId, name })
+          }
+          onRenamePage={(pageId, title) =>
+            updateTitle.mutate(
+              { pageId, title },
+              {
+                onSuccess: () => {
+                  if (pageId === selectedPageId) setTitle(title);
+                },
+              }
             )
           }
           onDeleteFolder={(folderId) =>
@@ -231,12 +253,6 @@ export function DashboardPage() {
           }
           onToggleFolderExpanded={(folderId, isExpanded) =>
             updateFolderExpanded.mutate({ folderId, isExpanded })
-          }
-          onCreatePage={(folderId) =>
-            createPage.mutate(
-              { folderId },
-              { onSuccess: (newPage) => setSelectedPageId(newPage.id) }
-            )
           }
           onDeletePage={(pageId) =>
             deletePage.mutate(pageId, {
@@ -260,13 +276,18 @@ export function DashboardPage() {
               <div className="min-w-0 max-w-full flex-1">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="shrink-0 text-2xl sm:text-3xl">{page.icon}</span>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="min-w-0 flex-1 truncate border-none bg-transparent text-lg font-bold text-slate-900 outline-none focus:ring-0 sm:text-2xl"
-                    placeholder="Untitled Page"
-                  />
+                  <div className="min-w-0 flex-1">
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full truncate border-none bg-transparent text-lg font-bold text-slate-900 outline-none focus:ring-0 sm:text-2xl"
+                      placeholder="Untitled Page"
+                    />
+                    <p className="text-xs font-medium uppercase tracking-wide text-indigo-600 sm:text-sm">
+                      7-day plan
+                    </p>
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
                   <span>
@@ -350,6 +371,10 @@ export function DashboardPage() {
               </div>
             )}
           </section>
+
+          <p className="mb-3 text-sm text-slate-600">
+            Add expenses for each day below. Changes save automatically when you edit entries.
+          </p>
 
           <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
             {page.days.map((day) => (

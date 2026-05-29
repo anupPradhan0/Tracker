@@ -38,11 +38,16 @@ export function useCreateFolder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload?: { name?: string; parentFolderId?: string | null }) =>
-      trackerApi.createFolder(payload),
-    onSuccess: () => {
+    mutationFn: (payload?: {
+      name?: string;
+      pageTitle?: string;
+      parentFolderId?: string | null;
+    }) => trackerApi.createFolder(payload),
+    onSuccess: (result) => {
+      queryClient.setQueryData(pageQueryKey(result.page.id), result.page);
       void queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
-      toast.success("Folder created");
+      void queryClient.invalidateQueries({ queryKey: PAGES_KEY });
+      toast.success("Folder and weekly plan created");
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -70,6 +75,20 @@ export function useUpdateFolderExpanded() {
       trackerApi.updateFolder(folderId, { isExpanded }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
+  });
+}
+
+export function useUpdateFolderName() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ folderId, name }: { folderId: string; name: string }) =>
+      trackerApi.updateFolder(folderId, { name }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: FOLDERS_KEY });
+      toast.success("Folder renamed");
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -121,6 +140,7 @@ export function useUpdatePageTitle() {
     onSuccess: (page) => {
       queryClient.setQueryData(pageQueryKey(page.id), page);
       void queryClient.invalidateQueries({ queryKey: PAGES_KEY });
+      toast.success("Page renamed");
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });

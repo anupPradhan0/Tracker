@@ -37,6 +37,11 @@ export interface TrackerPageDto {
   updatedAt: string;
 }
 
+export interface CreateFolderResultDto {
+  folder: TrackerFolderDto;
+  page: TrackerPageDto;
+}
+
 export interface FixedExpenseDto {
   title: string;
   amount: number;

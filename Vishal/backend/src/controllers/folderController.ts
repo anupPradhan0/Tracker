@@ -23,8 +23,8 @@ export const getFolders = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const postFolder = asyncHandler(async (req: Request, res: Response) => {
-  const folder = await createFolder(requireUserId(req), req.body as CreateFolderInput);
-  sendSuccess(res, folder, 201);
+  const result = await createFolder(requireUserId(req), req.body as CreateFolderInput);
+  sendSuccess(res, result, 201);
 });
 
 export const patchFolder = asyncHandler(async (req: Request, res: Response) => {

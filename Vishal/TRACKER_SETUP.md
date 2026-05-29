@@ -124,7 +124,7 @@ All `/tracker/*` routes require auth cookie (`auth_token`).
 | Method | Path | Body | Description |
 |--------|------|------|-------------|
 | GET | `/tracker/folders` | — | List folders (auto-migrates orphan pages into **My Folder**) |
-| POST | `/tracker/folders` | `{ name?, parentFolderId? }` | Create folder (default name: New Folder) |
+| POST | `/tracker/folders` | `{ name?, pageTitle?, parentFolderId? }` | Create folder + one 7-day plan page atomically (defaults: New Folder / Untitled Page). Returns `{ folder, page }`. |
 | PATCH | `/tracker/folders/:id` | `{ name?, isExpanded?, parentFolderId? }` | Update folder |
 | DELETE | `/tracker/folders/:id` | — | Delete folder recursively (nested folders + pages) |
 
@@ -135,7 +135,7 @@ All `/tracker/*` routes require auth cookie (`auth_token`).
 | GET | `/tracker/pages` | List all pages (includes `folderId`) |
 | GET | `/tracker/pages/default` | Get or create first page (7 empty days) |
 | GET | `/tracker/pages/:id` | Get page by id |
-| POST | `/tracker/pages` | `{ title?, icon?, folderId? }` — `folderId` required if no folders exist; otherwise uses first root folder |
+| POST | `/tracker/pages` | `{ title?, icon?, folderId? }` — legacy/internal; UI creates pages only via folder create |
 | PATCH | `/tracker/pages/:id` | `{ title?, icon? }` |
 | DELETE | `/tracker/pages/:id` | Delete page |
 
@@ -222,6 +222,9 @@ cd Vishal/backend && npx tsx scripts/test-email.mts
 
 | Feature | Status |
 |---------|--------|
+| Nested folders (one 7-day page per folder) | ✅ |
+| Folder + page naming on create | ✅ |
+| Rename folder / page from sidebar | ✅ |
 | Weekly dashboard (7 days) | ✅ |
 | Add / edit / delete entries | ✅ |
 | Page total & per-day totals | ✅ |

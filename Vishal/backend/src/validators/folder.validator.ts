@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const createFolderSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
+  pageTitle: z.string().trim().min(1).max(200).optional(),
   parentFolderId: z.string().min(1).nullable().optional(),
 });
 

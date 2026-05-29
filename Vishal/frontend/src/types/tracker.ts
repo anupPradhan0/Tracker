@@ -37,6 +37,11 @@ export interface TrackerPage {
   updatedAt: string;
 }
 
+export interface CreateFolderResult {
+  folder: TrackerFolder;
+  page: TrackerPage;
+}
+
 export interface FixedExpense {
   title: string;
   amount: number;

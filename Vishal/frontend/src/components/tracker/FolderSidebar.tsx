@@ -2,9 +2,9 @@ import { useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
-  FilePlus,
   FolderIcon,
   FolderPlus,
+  Pencil,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,24 +15,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { TrackerFolder, TrackerPage } from "@/types/tracker";
+
+interface CreateFolderPayload {
+  name: string;
+  pageTitle: string;
+  parentFolderId?: string | null;
+}
 
 interface FolderSidebarProps {
   folders: TrackerFolder[];
   pages: TrackerPage[];
   activePageId: string | null;
   isCreatingFolder: boolean;
-  isCreatingPage: boolean;
+  isRenamingFolder: boolean;
+  isRenamingPage: boolean;
   isDeletingFolder: boolean;
   isDeletingPage: boolean;
   onSelectPage: (pageId: string) => void;
-  onCreateFolder: (parentFolderId?: string | null) => void;
+  onCreateFolder: (payload: CreateFolderPayload) => void;
+  onRenameFolder: (folderId: string, name: string) => void;
+  onRenamePage: (pageId: string, title: string) => void;
   onDeleteFolder: (folderId: string) => void;
   onToggleFolderExpanded: (folderId: string, isExpanded: boolean) => void;
-  onCreatePage: (folderId: string) => void;
   onDeletePage: (pageId: string) => void;
 }
+
+type RenameTarget = { type: "folder"; id: string; name: string } | { type: "page"; id: string; name: string };
 
 function PageRow({
   page,
@@ -40,6 +52,7 @@ function PageRow({
   canDelete,
   isDeleting,
   onSelect,
+  onRename,
   onDelete,
 }: {
   page: TrackerPage;
@@ -47,6 +60,7 @@ function PageRow({
   canDelete: boolean;
   isDeleting: boolean;
   onSelect: () => void;
+  onRename: () => void;
   onDelete: () => void;
 }) {
   const entryCount = page.days.reduce((n, d) => n + d.entries.length, 0);
@@ -69,6 +83,16 @@ function PageRow({
           {entryCount} entries
         </span>
       </button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+        onClick={onRename}
+        aria-label={`Rename ${page.title}`}
+        title="Rename page"
+      >
+        <Pencil className="h-3.5 w-3.5 text-slate-500" />
+      </Button>
       {canDelete && (
         <Button
           variant="ghost"
@@ -95,10 +119,11 @@ function FolderTreeItem({
   isDeletingFolder,
   isDeletingPage,
   onSelectPage,
-  onCreateFolder,
+  onOpenCreateFolder,
+  onRenameFolder,
+  onRenamePage,
   onDeleteFolder,
   onToggleFolderExpanded,
-  onCreatePage,
   onDeletePage,
 }: {
   folder: TrackerFolder;
@@ -110,10 +135,11 @@ function FolderTreeItem({
   isDeletingFolder: boolean;
   isDeletingPage: boolean;
   onSelectPage: (pageId: string) => void;
-  onCreateFolder: (parentFolderId: string) => void;
+  onOpenCreateFolder: (parentFolderId: string) => void;
+  onRenameFolder: (folderId: string, name: string) => void;
+  onRenamePage: (pageId: string, title: string) => void;
   onDeleteFolder: (folderId: string) => void;
   onToggleFolderExpanded: (folderId: string, isExpanded: boolean) => void;
-  onCreatePage: (folderId: string) => void;
   onDeletePage: (pageId: string) => void;
 }) {
   const childFolders = folders.filter((f) => f.parentFolderId === folder.id);
@@ -156,17 +182,17 @@ function FolderTreeItem({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            title="New page in folder"
-            onClick={() => onCreatePage(folder.id)}
+            title="Rename folder"
+            onClick={() => onRenameFolder(folder.id, folder.name)}
           >
-            <FilePlus className="h-3.5 w-3.5" />
+            <Pencil className="h-3.5 w-3.5 text-slate-500" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-7 w-7"
             title="New subfolder"
-            onClick={() => onCreateFolder(folder.id)}
+            onClick={() => onOpenCreateFolder(folder.id)}
           >
             <FolderPlus className="h-3.5 w-3.5" />
           </Button>
@@ -193,6 +219,7 @@ function FolderTreeItem({
                 canDelete={totalPageCount > 1}
                 isDeleting={isDeletingPage}
                 onSelect={() => onSelectPage(page.id)}
+                onRename={() => onRenamePage(page.id, page.title)}
                 onDelete={() => {
                   if (
                     window.confirm(
@@ -217,10 +244,11 @@ function FolderTreeItem({
               isDeletingFolder={isDeletingFolder}
               isDeletingPage={isDeletingPage}
               onSelectPage={onSelectPage}
-              onCreateFolder={onCreateFolder}
+              onOpenCreateFolder={onOpenCreateFolder}
+              onRenameFolder={onRenameFolder}
+              onRenamePage={onRenamePage}
               onDeleteFolder={onDeleteFolder}
               onToggleFolderExpanded={onToggleFolderExpanded}
-              onCreatePage={onCreatePage}
               onDeletePage={onDeletePage}
             />
           ))}
@@ -235,28 +263,67 @@ export function FolderSidebar({
   pages,
   activePageId,
   isCreatingFolder,
-  isCreatingPage,
+  isRenamingFolder,
+  isRenamingPage,
   isDeletingFolder,
   isDeletingPage,
   onSelectPage,
   onCreateFolder,
+  onRenameFolder,
+  onRenamePage,
   onDeleteFolder,
   onToggleFolderExpanded,
-  onCreatePage,
   onDeletePage,
 }: FolderSidebarProps) {
-  const [folderPickOpen, setFolderPickOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createParentFolderId, setCreateParentFolderId] = useState<string | null>(null);
+  const [folderName, setFolderName] = useState("New Folder");
+  const [pageTitle, setPageTitle] = useState("Untitled Page");
+
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<RenameTarget | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
   const rootFolders = folders.filter((f) => f.parentFolderId === null);
 
-  const handleNewPage = () => {
-    if (folders.length === 0) {
-      return;
+  const openCreateDialog = (parentFolderId: string | null) => {
+    setCreateParentFolderId(parentFolderId);
+    setFolderName("New Folder");
+    setPageTitle("Untitled Page");
+    setCreateDialogOpen(true);
+  };
+
+  const handleCreateSubmit = () => {
+    const trimmedFolder = folderName.trim();
+    const trimmedPage = pageTitle.trim();
+    if (!trimmedFolder || !trimmedPage) return;
+
+    onCreateFolder({
+      name: trimmedFolder,
+      pageTitle: trimmedPage,
+      ...(createParentFolderId != null ? { parentFolderId: createParentFolderId } : {}),
+    });
+    setCreateDialogOpen(false);
+  };
+
+  const openRenameDialog = (target: RenameTarget) => {
+    setRenameTarget(target);
+    setRenameValue(target.name);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameSubmit = () => {
+    const trimmed = renameValue.trim();
+    if (!renameTarget || !trimmed) return;
+
+    if (renameTarget.type === "folder") {
+      onRenameFolder(renameTarget.id, trimmed);
+    } else {
+      onRenamePage(renameTarget.id, trimmed);
     }
-    if (folders.length === 1) {
-      onCreatePage(folders[0]!.id);
-      return;
-    }
-    setFolderPickOpen(true);
+    setRenameDialogOpen(false);
+    setRenameTarget(null);
+    setRenameValue("");
   };
 
   return (
@@ -265,26 +332,15 @@ export function FolderSidebar({
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
           Workspace
         </p>
-        <div className="flex flex-col gap-1.5">
-          <Button
-            variant="outline"
-            className="h-9 w-full justify-start text-sm"
-            disabled={isCreatingFolder}
-            onClick={() => onCreateFolder(null)}
-          >
-            <FolderPlus className="mr-2 h-4 w-4" />
-            New Folder
-          </Button>
-          <Button
-            variant="default"
-            className="h-9 w-full justify-start text-sm"
-            disabled={isCreatingPage || folders.length === 0}
-            onClick={handleNewPage}
-          >
-            <FilePlus className="mr-2 h-4 w-4" />
-            New Page
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          className="h-9 w-full justify-start text-sm"
+          disabled={isCreatingFolder}
+          onClick={() => openCreateDialog(null)}
+        >
+          <FolderPlus className="mr-2 h-4 w-4" />
+          New Folder
+        </Button>
       </div>
 
       <nav className="flex-1 overflow-y-auto p-2">
@@ -292,7 +348,7 @@ export function FolderSidebar({
           <p className="px-2 py-6 text-center text-sm text-slate-500">
             No folders yet.
             <br />
-            Create a folder first, then add pages inside it.
+            Create a folder to start your 7-day plan.
           </p>
         ) : (
           <div className="space-y-1">
@@ -308,10 +364,11 @@ export function FolderSidebar({
                 isDeletingFolder={isDeletingFolder}
                 isDeletingPage={isDeletingPage}
                 onSelectPage={onSelectPage}
-                onCreateFolder={onCreateFolder}
+                onOpenCreateFolder={openCreateDialog}
+                onRenameFolder={(id, name) => openRenameDialog({ type: "folder", id, name })}
+                onRenamePage={(id, name) => openRenameDialog({ type: "page", id, name })}
                 onDeleteFolder={onDeleteFolder}
                 onToggleFolderExpanded={onToggleFolderExpanded}
-                onCreatePage={onCreatePage}
                 onDeletePage={onDeletePage}
               />
             ))}
@@ -319,34 +376,75 @@ export function FolderSidebar({
         )}
       </nav>
 
-      <Dialog open={folderPickOpen} onOpenChange={setFolderPickOpen}>
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Select a folder</DialogTitle>
+            <DialogTitle>New folder &amp; weekly plan</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-slate-600">
-            Pages must be created inside a folder. Choose where to add your new page:
+            Each folder includes one 7-day plan page. Name both before creating.
           </p>
-          <div className="max-h-64 space-y-1 overflow-y-auto">
-            {folders.map((folder) => (
-              <Button
-                key={folder.id}
-                variant="ghost"
-                className="w-full justify-start"
-                disabled={isCreatingPage}
-                onClick={() => {
-                  onCreatePage(folder.id);
-                  setFolderPickOpen(false);
-                }}
-              >
-                <FolderIcon className="mr-2 h-4 w-4" />
-                {folder.name}
-              </Button>
-            ))}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="folder-name">Folder name</Label>
+              <Input
+                id="folder-name"
+                value={folderName}
+                onChange={(e) => setFolderName(e.target.value)}
+                placeholder="New Folder"
+                onKeyDown={(e) => e.key === "Enter" && handleCreateSubmit()}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="page-title">Page name</Label>
+              <Input
+                id="page-title"
+                value={pageTitle}
+                onChange={(e) => setPageTitle(e.target.value)}
+                placeholder="Untitled Page"
+                onKeyDown={(e) => e.key === "Enter" && handleCreateSubmit()}
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFolderPickOpen(false)}>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               Cancel
+            </Button>
+            <Button
+              disabled={isCreatingFolder || !folderName.trim() || !pageTitle.trim()}
+              onClick={handleCreateSubmit}
+            >
+              {isCreatingFolder ? "Creating…" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Rename {renameTarget?.type === "folder" ? "folder" : "page"}
+            </DialogTitle>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder="Enter new name"
+            onKeyDown={(e) => e.key === "Enter" && handleRenameSubmit()}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                !renameValue.trim() ||
+                (renameTarget?.type === "folder" ? isRenamingFolder : isRenamingPage)
+              }
+              onClick={handleRenameSubmit}
+            >
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
