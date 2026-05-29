@@ -3,7 +3,7 @@ import type { AIProviderAdapter } from "./provider.interface.js";
 import { parseAIResponse } from "./response.formatter.js";
 import { AppError } from "../../common/errors/app-error.js";
 
-const COHERE_TIMEOUT_MS = 10_000;
+const COHERE_TIMEOUT_MS = 60_000;
 
 interface CohereContentBlock {
   type?: string;

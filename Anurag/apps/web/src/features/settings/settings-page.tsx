@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/shared/page-header";
+import { NativeSelect } from "@/components/shared/native-select";
 import { toast } from "sonner";
 import { LogOut, Moon, Sun } from "lucide-react";
 
@@ -115,8 +117,8 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+    <div className="space-y-5 pb-4 sm:space-y-6 sm:pb-0">
+      <PageHeader title="Settings" description="Profile, email reports, and AI keys" />
 
       <Card>
         <CardHeader>
@@ -171,6 +173,7 @@ export function SettingsPage() {
             </p>
           </div>
           <Button
+            className="w-full sm:w-auto"
             onClick={() => saveEmailSettings.mutate()}
             disabled={saveEmailSettings.isPending || !receiverEmail.trim()}
           >
@@ -186,8 +189,7 @@ export function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Active provider (used for AI summary &amp; email)</Label>
-            <select
-              className="flex h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 text-sm"
+            <NativeSelect
               value={preferredProvider}
               onChange={(e) => {
                 const p = e.target.value as AiProviderId;
@@ -201,20 +203,25 @@ export function SettingsPage() {
                   {p.label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           {aiKeys?.map((k) => (
-            <div key={k.provider} className="flex items-center justify-between text-sm">
-              <span>
-                {AI_PROVIDERS.find((p) => p.id === k.provider)?.label ?? k.provider}
-              </span>
-              <span className="text-[var(--color-muted-foreground)]">
-                {k.configured ? k.keyHint : "Not configured"}
-              </span>
+            <div
+              key={k.provider}
+              className="flex flex-col gap-2 rounded-lg border border-[var(--color-border)] p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0">
+                <p className="font-medium">
+                  {AI_PROVIDERS.find((p) => p.id === k.provider)?.label ?? k.provider}
+                </p>
+                <p className="text-[var(--color-muted-foreground)]">
+                  {k.configured ? k.keyHint : "Not configured"}
+                </p>
+              </div>
               {k.configured && (
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => removeKey.mutate(k.provider)}
                 >
                   Remove
@@ -224,8 +231,7 @@ export function SettingsPage() {
           ))}
           <div className="space-y-2 border-t border-[var(--color-border)] pt-4">
             <Label>Provider</Label>
-            <select
-              className="flex h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 text-sm"
+            <NativeSelect
               value={provider}
               onChange={(e) => setProvider(e.target.value as AiProviderId)}
             >
@@ -234,7 +240,7 @@ export function SettingsPage() {
                   {p.label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
             <Label>API Key</Label>
             <Input
               type="password"
@@ -242,7 +248,11 @@ export function SettingsPage() {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
             />
-            <Button onClick={() => saveKey.mutate()} disabled={!apiKey || saveKey.isPending}>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => saveKey.mutate()}
+              disabled={!apiKey || saveKey.isPending}
+            >
               Save key
             </Button>
           </div>

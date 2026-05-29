@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { apiPost } from "@/lib/api-client";
+import { apiPost, formatApiError } from "@/lib/api-client";
 import { toast } from "sonner";
 
 type SendExpenseEmailResult = { sent: boolean; email: string };
@@ -13,6 +13,6 @@ export function useSendExpenseEmail(period: "WEEKLY" | "MONTHLY" = "MONTHLY") {
         data?.email ? `Expense report sent to ${data.email}` : "Expense report sent"
       );
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e) => toast.error(formatApiError(e)),
   });
 }

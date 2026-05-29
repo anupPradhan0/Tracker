@@ -52,6 +52,7 @@ export interface ExpenseDto {
   amount: string;
   description: string | null;
   date: string;
+  period: "WEEKLY" | "MONTHLY";
   currency: string;
   categoryId: string;
   category?: CategoryDto;

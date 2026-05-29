@@ -1,10 +1,14 @@
 # Local development stack
 #
-# Postgres only (default):  docker compose up -d
-# Postgres + API:           docker compose --profile app up -d --build
+# Postgres only (default):     docker compose up -d
+# Full stack (DB + API + web): docker compose --profile app up -d --build
+# Or:                          pnpm docker:up:all
 #
-# Run web on host:          pnpm dev  (uses MAIL_*, COHERE_MODEL, GEMINI_MODEL from .env)
-# API in Docker uses .env via env_file; DATABASE_URL is overridden to reach postgres service.
+# Web UI:  http://localhost:${WEB_PORT:-5173}
+# API:     http://localhost:${PORT:-4000}/api/v1/health
+#
+# When using the `app` profile, the web container proxies /api to the API service.
+# Set CLIENT_URL to the web URL (default http://localhost:5173) for CORS/cookies.
 
 services:
   postgres:
@@ -36,6 +40,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: api
     container_name: anurag-api
     restart: unless-stopped
     ports:
@@ -43,9 +48,39 @@ services:
     env_file:
       - .env
     environment:
+      NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-anurag}:${POSTGRES_PASSWORD:-anurag_dev}@postgres:5432/${POSTGRES_DB:-expense_tracker}?schema=public
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
     depends_on:
       postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:4000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - anurag
+
+  web:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+      args:
+        VITE_API_URL: /api/v1
+    container_name: anurag-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5173}:80"
+    depends_on:
+      api:
         condition: service_healthy
     networks:
       - anurag

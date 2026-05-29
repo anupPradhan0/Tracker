@@ -9,6 +9,7 @@ function mapExpense(e: {
   amount: Prisma.Decimal;
   description: string | null;
   date: Date;
+  period: "WEEKLY" | "MONTHLY";
   currency: string;
   categoryId: string;
   createdAt: Date;
@@ -20,6 +21,7 @@ function mapExpense(e: {
     amount: e.amount.toString(),
     description: e.description,
     date: e.date.toISOString(),
+    period: e.period,
     currency: e.currency,
     categoryId: e.categoryId,
     category: e.category
@@ -38,9 +40,10 @@ function mapExpense(e: {
 
 export class ExpensesService {
   async list(userId: string, query: ExpenseQueryInput) {
-    const { page, limit, search, categoryId, from, to, sort } = query;
+    const { page, limit, search, categoryId, from, to, period, sort } = query;
     const where: Prisma.ExpenseWhereInput = { userId };
 
+    if (period) where.period = period;
     if (categoryId) where.categoryId = categoryId;
     if (search) {
       where.OR = [{ description: { contains: search, mode: "insensitive" } }];
@@ -92,7 +95,14 @@ export class ExpensesService {
 
   async create(
     userId: string,
-    data: { amount: number; description?: string; date: string; categoryId: string; currency?: string }
+    data: {
+      amount: number;
+      description?: string;
+      date: string;
+      categoryId: string;
+      period?: "WEEKLY" | "MONTHLY";
+      currency?: string;
+    }
   ) {
     const category = await prisma.category.findFirst({
       where: { id: data.categoryId, userId },
@@ -106,6 +116,7 @@ export class ExpensesService {
         amount: data.amount,
         description: data.description,
         date: new Date(data.date),
+        period: data.period ?? "MONTHLY",
         currency: data.currency ?? "INR",
       },
       include: { category: true },
@@ -116,7 +127,14 @@ export class ExpensesService {
   async update(
     userId: string,
     id: string,
-    data: Partial<{ amount: number; description?: string; date: string; categoryId: string; currency?: string }>
+    data: Partial<{
+      amount: number;
+      description?: string;
+      date: string;
+      categoryId: string;
+      period?: "WEEKLY" | "MONTHLY";
+      currency?: string;
+    }>
   ) {
     const existing = await prisma.expense.findFirst({ where: { id, userId } });
     if (!existing) throw AppError.notFound("Expense not found");
@@ -134,6 +152,7 @@ export class ExpensesService {
         ...(data.amount !== undefined && { amount: data.amount }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.date && { date: new Date(data.date) }),
+        ...(data.period && { period: data.period }),
         ...(data.categoryId && { categoryId: data.categoryId }),
         ...(data.currency && { currency: data.currency }),
       },
