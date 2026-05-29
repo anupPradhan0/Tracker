@@ -3,15 +3,39 @@ import path from "path";
 import { config } from "dotenv";
 import { z } from "zod";
 
-function loadEnvFiles(): void {
-  const localEnv = path.resolve(process.cwd(), ".env");
-  const monorepoEnv = path.resolve(process.cwd(), "backend", ".env");
+function findBackendEnvPath(): string | undefined {
+  const seen = new Set<string>();
+  const tryPath = (candidate: string): string | undefined => {
+    const resolved = path.resolve(candidate);
+    if (seen.has(resolved) || !existsSync(resolved)) {
+      return undefined;
+    }
+    seen.add(resolved);
+    return resolved;
+  };
 
-  if (existsSync(localEnv)) {
-    config({ path: localEnv });
+  const roots = new Set<string>([process.cwd()]);
+  if (process.env.INIT_CWD) {
+    roots.add(process.env.INIT_CWD);
   }
-  if (existsSync(monorepoEnv)) {
-    config({ path: monorepoEnv, override: true });
+
+  for (const root of roots) {
+    const hit =
+      tryPath(path.join(root, "backend", ".env")) ??
+      tryPath(path.join(root, "Vishal", "backend", ".env")) ??
+      tryPath(path.join(root, ".env"));
+    if (hit) {
+      return hit;
+    }
+  }
+
+  return undefined;
+}
+
+function loadEnvFiles(): void {
+  const backendEnv = findBackendEnvPath();
+  if (backendEnv) {
+    config({ path: backendEnv });
   }
 }
 

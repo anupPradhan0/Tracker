@@ -8,6 +8,7 @@ import {
   getEmailStatus,
   isEmailConfigured,
   sendWeeklyReportEmail,
+  verifySmtpConnection,
 } from "../services/emailService.js";
 import { buildWeeklyEmailData } from "../services/weeklyReportService.js";
 import { generateWeeklyPdf } from "../services/pdfService.js";
@@ -20,14 +21,6 @@ export const sendWeeklyEmail = asyncHandler(async (req: Request, res: Response) 
 
   const body = req.body as { pageId?: string };
 
-  if (!isEmailConfigured()) {
-    throw new ApiError(
-      503,
-      "EMAIL_NOT_CONFIGURED",
-      getEmailSetupHint() ??
-        "Set MAIL_HOST, MAIL_USER, and MAIL_PASSWORD in backend/.env, then restart the backend server."
-    );
-  }
   let pageId = body.pageId;
 
   if (!pageId) {
@@ -42,6 +35,14 @@ export const sendWeeklyEmail = asyncHandler(async (req: Request, res: Response) 
   try {
     await sendWeeklyReportEmail(email, data, { filename, content: pdfBuffer });
   } catch (err) {
+    if (!isEmailConfigured()) {
+      throw new ApiError(
+        503,
+        "EMAIL_NOT_CONFIGURED",
+        getEmailSetupHint() ??
+          "Set MAIL_HOST, MAIL_USER, and MAIL_PASSWORD in backend/.env, then restart the backend server."
+      );
+    }
     throw new ApiError(502, "EMAIL_SEND_FAILED", formatSmtpError(err));
   }
 
@@ -50,9 +51,13 @@ export const sendWeeklyEmail = asyncHandler(async (req: Request, res: Response) 
 
 export const emailStatus = asyncHandler(async (_req: Request, res: Response) => {
   const status = getEmailStatus();
+  const verify = await verifySmtpConnection();
+  const hint = verify.hint ?? getEmailSetupHint();
+
   sendSuccess(res, {
     configured: status.configured,
-    ready: status.ready,
+    ready: status.ready && verify.ready,
     canSend: status.ready,
+    ...(hint ? { hint } : {}),
   });
 });

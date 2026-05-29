@@ -3,7 +3,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { env } from "../config/env.js";
-import { isEmailConfigured, sendWeeklyReportEmail } from "../services/emailService.js";
+import {
+  getEmailSetupHint,
+  isEmailConfigured,
+  sendWeeklyReportEmail,
+} from "../services/emailService.js";
 import { getUsersForWeeklyCron } from "../services/weeklyReportService.js";
 import { generateWeeklyAnalysisForEmail } from "../services/aiSummaryService.js";
 import { generateWeeklyPdf } from "../services/pdfService.js";
@@ -59,7 +63,12 @@ export const runWeeklyEmailCron = asyncHandler(async (req: Request, res: Respons
   verifyCronAuth(req);
 
   if (!isEmailConfigured()) {
-    throw new ApiError(503, "EMAIL_NOT_CONFIGURED", "Email service is not configured");
+    throw new ApiError(
+      503,
+      "EMAIL_NOT_CONFIGURED",
+      getEmailSetupHint() ??
+        "Set MAIL_HOST, MAIL_USER, and MAIL_PASSWORD in backend/.env, then restart the backend server."
+    );
   }
 
   const users = await getUsersForWeeklyCron();
