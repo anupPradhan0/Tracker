@@ -168,15 +168,34 @@ Example crontab (Sunday 23:59):
 2. Set in `backend/.env`:
 
 ```env
+# RULE: MAIL_USER must be the SAME @gmail.com account that created MAIL_PASSWORD.
+# MAIL_FROM is optional display name only — it cannot be a different Gmail account.
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USER=your@gmail.com
-MAIL_PASSWORD=your-app-password
+MAIL_PASSWORD=your-16-char-app-password
+# MAIL_FROM="Finance Tracker"   # name only, or same email as MAIL_USER
 ```
 
 3. In the dashboard **Settings** (gear), enable **Weekly email reports**.
 4. Use **Email report** on the dashboard for a manual send (includes PDF attachment).
 5. Schedule `/api/cron/weekly-email` for automated weekly sends.
+
+### Email troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `Gmail rejected the login` / SMTP 535 | `MAIL_USER` must match the Google account that created the App Password — not just `MAIL_FROM`. |
+| `MAIL_FROM uses a different address` | Set `MAIL_USER` to the App Password account, or use `MAIL_FROM` as display name only (e.g. `MAIL_FROM="Finance Tracker"`). |
+| Error after editing `.env` | Restart the backend — env is loaded once at startup. |
+| App Password stopped working | Regenerate at [Google App passwords](https://myaccount.google.com/apppasswords) (revoked after Google password change). |
+
+Verify SMTP locally:
+
+```bash
+cd Vishal/backend && npx tsx scripts/test-email.mts
+# expect: addresses match: true, verify: { ready: true }
+```
 
 ---
 

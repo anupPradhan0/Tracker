@@ -3,9 +3,26 @@ import {
   calculatePageTotal,
   getWeeklyBudget,
   parseFixedExpenses,
+  type FixedExpenseDto,
 } from "../utils/tracker.js";
 import type { TrackerPageDto } from "../types/tracker.js";
 import type { WeeklyEmailData } from "./emailService.js";
+import type { AIInsightResponse } from "./cohereService.js";
+import { formatAiAnalysisForEmail } from "./cohereService.js";
+import { generateWeeklyReportInsight } from "./aiSummaryService.js";
+import {
+  generateWeeklyPdf,
+  weeklyReportPdfFilename,
+  type WeeklyPdfReportInput,
+} from "./pdfService.js";
+
+export interface WeeklyReportPackage {
+  email: string;
+  data: WeeklyEmailData;
+  page: TrackerPageDto;
+  insight: AIInsightResponse;
+  fixedExpenses: FixedExpenseDto[];
+}
 
 function mapPageFromDb(page: {
   id: string;
@@ -101,10 +118,35 @@ export function buildWeeklyAnalysis(
   return lines.join("\n");
 }
 
-export async function buildWeeklyEmailData(
+export function toWeeklyPdfInput(pkg: WeeklyReportPackage): WeeklyPdfReportInput {
+  return {
+    page: pkg.page,
+    currency: pkg.data.currency,
+    userName: pkg.data.userName,
+    monthlyBudget: pkg.data.monthlyBudget,
+    weeklyBudget: pkg.data.weeklyBudget,
+    weekTotal: pkg.data.weekTotal,
+    difference: pkg.data.difference,
+    isOverBudget: pkg.data.isOverBudget,
+    fixedExpenses: pkg.fixedExpenses,
+    insight: pkg.insight,
+  };
+}
+
+export function buildWeeklyPdfBuffer(pkg: WeeklyReportPackage): {
+  buffer: Buffer;
+  filename: string;
+} {
+  return {
+    buffer: generateWeeklyPdf(toWeeklyPdfInput(pkg)),
+    filename: weeklyReportPdfFilename(pkg.page.title),
+  };
+}
+
+export async function buildWeeklyReportPackage(
   userId: string,
   pageId: string
-): Promise<{ email: string; data: WeeklyEmailData; page: TrackerPageDto }> {
+): Promise<WeeklyReportPackage> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
@@ -144,6 +186,14 @@ export async function buildWeeklyEmailData(
   const weeklyBudget = getWeeklyBudget(settings.monthlyBudget, fixedExpenses);
   const difference = weeklyBudget > 0 ? page.pageTotal - weeklyBudget : 0;
 
+  const insight = await generateWeeklyReportInsight(
+    userId,
+    page,
+    settings.currency,
+    settings.monthlyBudget,
+    fixedExpenses
+  );
+
   const data: WeeklyEmailData = {
     userName: user.name,
     currency: settings.currency,
@@ -153,19 +203,10 @@ export async function buildWeeklyEmailData(
     difference,
     isOverBudget: weeklyBudget > 0 && difference > 0,
     pageTitle: page.title,
-    analysis: await (async () => {
-      const { generateWeeklyAnalysisForEmail } = await import("./aiSummaryService.js");
-      return generateWeeklyAnalysisForEmail(
-        userId,
-        page,
-        settings.currency,
-        settings.monthlyBudget,
-        fixedExpenses
-      );
-    })(),
+    analysis: formatAiAnalysisForEmail(insight),
   };
 
-  return { email: user.email, data, page };
+  return { email: user.email, data, page, insight, fixedExpenses };
 }
 
 export async function getUsersForWeeklyCron() {

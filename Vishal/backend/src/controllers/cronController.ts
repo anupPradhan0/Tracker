@@ -8,11 +8,11 @@ import {
   isEmailConfigured,
   sendWeeklyReportEmail,
 } from "../services/emailService.js";
-import { getUsersForWeeklyCron } from "../services/weeklyReportService.js";
-import { generateWeeklyAnalysisForEmail } from "../services/aiSummaryService.js";
-import { generateWeeklyPdf } from "../services/pdfService.js";
-import { calculatePageTotal, getWeeklyBudget, parseFixedExpenses } from "../utils/tracker.js";
-import type { TrackerPageDto } from "../types/tracker.js";
+import {
+  buildWeeklyReportPackage,
+  buildWeeklyPdfBuffer,
+  getUsersForWeeklyCron,
+} from "../services/weeklyReportService.js";
 
 function verifyCronAuth(req: Request) {
   if (!env.CRON_SECRET) {
@@ -27,36 +27,6 @@ function verifyCronAuth(req: Request) {
   if (auth !== `Bearer ${env.CRON_SECRET}`) {
     throw new ApiError(401, "UNAUTHORIZED", "Invalid cron secret");
   }
-}
-
-function mapUserPage(
-  page: NonNullable<Awaited<ReturnType<typeof getUsersForWeeklyCron>>[0]["trackerPages"][0]>
-): TrackerPageDto {
-  const days = page.days.map((day) => ({
-    id: day.id,
-    dayIndex: day.dayIndex,
-    entries: day.entries.map((e) => ({
-      id: e.id,
-      title: e.title,
-      amount: e.amount,
-      description: e.description,
-      category: e.category,
-      tags: e.tags,
-      sortOrder: e.sortOrder,
-      createdAt: e.createdAt.toISOString(),
-      updatedAt: e.updatedAt.toISOString(),
-    })),
-  }));
-
-  return {
-    id: page.id,
-    title: page.title,
-    icon: page.icon,
-    days,
-    pageTotal: calculatePageTotal(days),
-    createdAt: page.createdAt.toISOString(),
-    updatedAt: page.updatedAt.toISOString(),
-  };
 }
 
 export const runWeeklyEmailCron = asyncHandler(async (req: Request, res: Response) => {
@@ -79,34 +49,10 @@ export const runWeeklyEmailCron = asyncHandler(async (req: Request, res: Respons
     if (!pageRecord) continue;
 
     try {
-      const settings = user.settings!;
-      const page = mapUserPage(pageRecord);
-      const fixedExpenses = parseFixedExpenses(settings.fixedExpenses);
-      const weeklyBudget = getWeeklyBudget(settings.monthlyBudget, fixedExpenses);
-      const difference = weeklyBudget > 0 ? page.pageTotal - weeklyBudget : 0;
+      const pkg = await buildWeeklyReportPackage(user.id, pageRecord.id);
+      const { buffer, filename } = buildWeeklyPdfBuffer(pkg);
 
-      const data = {
-        userName: user.name,
-        currency: settings.currency,
-        monthlyBudget: settings.monthlyBudget,
-        weeklyBudget,
-        weekTotal: page.pageTotal,
-        difference,
-        isOverBudget: weeklyBudget > 0 && difference > 0,
-        pageTitle: page.title,
-        analysis: await generateWeeklyAnalysisForEmail(
-          user.id,
-          page,
-          settings.currency,
-          settings.monthlyBudget,
-          fixedExpenses
-        ),
-      };
-
-      const pdfBuffer = generateWeeklyPdf(page, settings.currency, user.name);
-      const filename = `${page.title.replace(/[^a-z0-9]/gi, "_")}_weekly_report.pdf`;
-
-      await sendWeeklyReportEmail(user.email, data, { filename, content: pdfBuffer });
+      await sendWeeklyReportEmail(pkg.email, pkg.data, { filename, content: buffer });
       results.success++;
     } catch (err) {
       results.failed++;

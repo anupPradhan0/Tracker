@@ -24,6 +24,97 @@ function isGmailHost(host: string): boolean {
   return host.includes("gmail.com") || host.includes("googlemail.com");
 }
 
+/** Extract email from MAIL_FROM: `"Name" <a@b.com>`, `a@b.com`, or undefined if name-only. */
+export function extractFromEmail(mailFrom: string | undefined): string | undefined {
+  if (!mailFrom?.trim()) {
+    return undefined;
+  }
+  const trimmed = mailFrom.trim();
+  const angleMatch = trimmed.match(/<([^>]+)>/);
+  if (angleMatch?.[1]) {
+    return angleMatch[1].trim().toLowerCase();
+  }
+  if (trimmed.includes("@")) {
+    return trimmed.toLowerCase();
+  }
+  return undefined;
+}
+
+function extractDisplayNameFromMailFrom(mailFrom: string | undefined): string | undefined {
+  if (!mailFrom?.trim()) {
+    return undefined;
+  }
+  const trimmed = mailFrom.trim();
+  const quotedMatch = trimmed.match(/^"([^"]+)"/);
+  if (quotedMatch?.[1]) {
+    return quotedMatch[1];
+  }
+  if (trimmed.includes("<")) {
+    const before = trimmed.split("<")[0]?.trim();
+    if (before && !before.includes("@")) {
+      return before.replace(/^"|"$/g, "");
+    }
+  }
+  if (!trimmed.includes("@")) {
+    return trimmed;
+  }
+  return undefined;
+}
+
+function maskEmail(email: string): string {
+  const at = email.indexOf("@");
+  if (at <= 0) {
+    return "***";
+  }
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const maskedLocal = local.length <= 2 ? "**" : `${local.slice(0, 2)}***`;
+  return `${maskedLocal}@${domain}`;
+}
+
+function getMailUserFromMismatchHint(): string | undefined {
+  const host = env.MAIL_HOST?.trim();
+  const user = env.MAIL_USER?.trim();
+  if (!host || !user || !isGmailHost(host)) {
+    return undefined;
+  }
+
+  const fromEmail = extractFromEmail(env.MAIL_FROM);
+  if (!fromEmail || fromEmail === user.toLowerCase()) {
+    return undefined;
+  }
+
+  return (
+    `MAIL_USER (${maskEmail(user)}) must be the Gmail account that created the App Password. ` +
+    `MAIL_FROM uses a different address (${maskEmail(fromEmail)}) — set MAIL_USER to match, or remove the email from MAIL_FROM.`
+  );
+}
+
+export function getMailAddressDiagnostics(): {
+  mailUser: string;
+  mailFromEmail?: string;
+  addressesMatch: boolean;
+} | null {
+  const user = env.MAIL_USER?.trim();
+  if (!user) {
+    return null;
+  }
+  const fromEmail = extractFromEmail(env.MAIL_FROM);
+  return {
+    mailUser: maskEmail(user),
+    mailFromEmail: fromEmail ? maskEmail(fromEmail) : undefined,
+    addressesMatch: !fromEmail || fromEmail === user.toLowerCase(),
+  };
+}
+
+/** Log a startup warning when Gmail MAIL_FROM email differs from MAIL_USER. */
+export function warnEmailConfigOnStartup(): void {
+  const hint = getMailUserFromMismatchHint();
+  if (hint) {
+    console.warn(`[email] ${hint}`);
+  }
+}
+
 /** Gmail app passwords are 16 chars; users often paste them with spaces. */
 export function normalizeMailPassword(password: string): string {
   return password.replace(/\s+/g, "");
@@ -80,6 +171,11 @@ export function getEmailSetupHint(): string | undefined {
     if (env.MAIL_USER && !env.MAIL_USER.toLowerCase().includes("@gmail.")) {
       return "For Gmail, MAIL_USER should be your full @gmail.com address.";
     }
+
+    const mismatchHint = getMailUserFromMismatchHint();
+    if (mismatchHint) {
+      return mismatchHint;
+    }
   }
 
   return undefined;
@@ -91,28 +187,34 @@ function createTransporter() {
     throw new Error("Email is not configured. Set MAIL_HOST, MAIL_USER, and MAIL_PASSWORD.");
   }
 
-  const host = env.MAIL_HOST?.trim();
-
-  if (host && isGmailHost(host)) {
-    return nodemailer.createTransport({
-      service: "gmail",
-      auth,
-    });
-  }
-
-  if (!host) {
-    throw new Error("MAIL_HOST is required for non-Gmail mail providers.");
-  }
+  const host = env.MAIL_HOST?.trim() || "smtp.gmail.com";
+  const port = env.MAIL_PORT;
+  const secure = port === 465;
 
   return nodemailer.createTransport({
     host,
-    port: env.MAIL_PORT,
-    secure: env.MAIL_PORT === 465,
+    port,
+    secure,
+    requireTLS: !secure,
     auth,
+    connectionTimeout: 20_000,
+    greetingTimeout: 20_000,
+    socketTimeout: 30_000,
+    // Prefer IPv4 — avoids "could not reach mail server" on some Linux/DNS setups
+    family: 4,
   });
 }
 
 function getFromAddress(): string {
+  const user = env.MAIL_USER?.trim();
+  const host = env.MAIL_HOST?.trim() || "smtp.gmail.com";
+
+  // Gmail: SMTP auth and From must use the same Google account (Anup-style).
+  if (user && isGmailHost(host)) {
+    const displayName = extractDisplayNameFromMailFrom(env.MAIL_FROM) ?? "Finance Tracker";
+    return `"${displayName}" <${user}>`;
+  }
+
   const from = env.MAIL_FROM?.trim() || env.MAIL_USER;
   if (!from) {
     return '"Finance Tracker" <noreply@localhost>';
@@ -123,28 +225,60 @@ function getFromAddress(): string {
   return `"Finance Tracker" <${from}>`;
 }
 
-export function formatSmtpError(err: unknown): string {
-  const code =
-    err && typeof err === "object" && "code" in err
-      ? String((err as { code?: string }).code)
-      : "";
+function getSmtpErrorCode(err: unknown): string {
+  if (!err || typeof err !== "object") {
+    return "";
+  }
+  const record = err as { code?: string; responseCode?: number };
+  if (record.code) {
+    return String(record.code);
+  }
+  if (record.responseCode === 535) {
+    return "EAUTH";
+  }
+  return "";
+}
 
-  if (code === "EAUTH" || code === "EENVELOPE") {
-    const hint = getEmailSetupHint();
+export function formatSmtpError(err: unknown): string {
+  const code = getSmtpErrorCode(err);
+  const message =
+    err instanceof Error ? err.message : typeof err === "string" ? err : "";
+
+  const isAuthFailure =
+    code === "EAUTH" ||
+    code === "EENVELOPE" ||
+    /535|username and password not accepted|invalid login/i.test(message);
+
+  if (isAuthFailure) {
+    const hint = getEmailSetupHint() ?? getMailUserFromMismatchHint();
     if (hint) {
       return hint;
     }
+    let message =
+      "Gmail rejected the login. Use a 16-character App Password for the same address as MAIL_USER " +
+      "(Google Account → Security → App passwords), then restart the backend.";
+    if (env.NODE_ENV === "development" && env.MAIL_USER?.trim()) {
+      message += ` (SMTP 535 for MAIL_USER=${maskEmail(env.MAIL_USER.trim())})`;
+    }
+    return message;
+  }
+
+  if (
+    code === "ECONNECTION" ||
+    code === "ETIMEDOUT" ||
+    code === "EDNS" ||
+    code === "ESOCKET" ||
+    code === "ENOTFOUND" ||
+    /getaddrinfo|could not connect|connection closed/i.test(message)
+  ) {
     return (
-      "Email login failed. For Gmail, use a 16-character App Password with 2-Step Verification enabled."
+      `Could not reach ${env.MAIL_HOST ?? "smtp.gmail.com"} on port ${env.MAIL_PORT}. ` +
+      "Check your internet, firewall/VPN, and that MAIL_HOST=smtp.gmail.com and MAIL_PORT=587."
     );
   }
 
-  if (code === "ECONNECTION" || code === "ETIMEDOUT" || code === "EDNS") {
-    return "Could not reach the mail server. Check MAIL_HOST, MAIL_PORT, and your network.";
-  }
-
-  if (err instanceof Error && err.message) {
-    return err.message;
+  if (message) {
+    return message;
   }
 
   return "Failed to send email. Check server mail settings.";
@@ -169,6 +303,8 @@ Status: ${status}
 
 Summary:
 ${data.analysis}
+
+The attached PDF includes your full weekly report: budget overview, spending by day and category, insights, and the complete expense log.
 
 ---
 Finance Tracker · automated weekly report
@@ -199,6 +335,8 @@ function buildHtmlBody(data: WeeklyEmailData): string {
     <p style="margin:0 0 16px;padding:12px 16px;border-radius:8px;background:${data.isOverBudget ? "#fef2f2" : "#f0fdf4"};color:${statusColor};font-weight:600;">${statusText}</p>
 
     <div style="white-space:pre-line;color:#334155;line-height:1.7;font-size:14px;">${data.analysis.replace(/\n/g, "<br>")}</div>
+
+    <p style="margin:20px 0 0;font-size:13px;color:#64748b;line-height:1.6;">The attached PDF includes your full weekly report: budget overview, spending by day and category, insights, and the complete expense log.</p>
 
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0 16px;">
     <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">Finance Tracker · weekly report</p>
