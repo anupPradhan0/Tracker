@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String           @id @default(cuid())
+  name         String
+  email        String           @unique
+  password     String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  trackerPages TrackerPage[]
+  settings     TrackerSettings?
+  aiSummaries  AISummary[]
+}
+
+model AISummary {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scopeKey        String
+  date            String
+  type            String
+  pageId          String?
+  dayIndex        Int?
+  summary         String
+  totalSpent      Float
+  insights        String[] @default([])
+  recommendations String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, scopeKey])
+  @@index([userId, type])
+}
+
+model TrackerSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency             String   @default("₹")
+  monthlyBudget        Float    @default(0)
+  fixedExpenses        Json     @default("[]")
+  weeklyReportsEnabled Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model TrackerPage {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String       @default("Untitled Page")
+  icon      String       @default("📄")
+  days      TrackerDay[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+model TrackerDay {
+  id        String         @id @default(cuid())
+  pageId    String
+  page      TrackerPage    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  dayIndex  Int
+  entries   TrackerEntry[]
+
+  @@unique([pageId, dayIndex])
+}
+
+model TrackerEntry {
+  id          String     @id @default(cuid())
+  dayId       String
+  day         TrackerDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  title       String
+  amount      Float
+  description String     @default("")
+  category    String     @default("")
+  tags        String[]   @default([])
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([dayId])
+}
