@@ -62,7 +62,7 @@ export function EntryDialog({
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Title *
             </label>
             <Input
@@ -73,7 +73,7 @@ export function EntryDialog({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Amount *
             </label>
             <Input
@@ -87,7 +87,7 @@ export function EntryDialog({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Description
             </label>
             <Textarea
@@ -99,7 +99,7 @@ export function EntryDialog({
           </div>
 
           <div className="relative">
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Category
             </label>
             <Input
@@ -114,12 +114,12 @@ export function EntryDialog({
               autoComplete="off"
             />
             {showCategories && filteredCategories.length > 0 && (
-              <ul className="absolute z-20 mt-1 max-h-40 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+              <ul className="absolute z-20 mt-1 max-h-40 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
                 {filteredCategories.map((cat) => (
                   <li key={cat}>
                     <button
                       type="button"
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-indigo-50 dark:hover:bg-slate-700"
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-indigo-50"
                       onMouseDown={(e) => {
                         e.preventDefault();
                         setForm({ ...form, category: cat });
@@ -135,7 +135,7 @@ export function EntryDialog({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Tags
             </label>
             <Input
@@ -143,7 +143,7 @@ export function EntryDialog({
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
               placeholder="comma separated"
             />
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {QUICK_TAGS.map((tag) => {
                 const active = tagsArr.includes(tag);
                 return (
@@ -154,7 +154,7 @@ export function EntryDialog({
                       "rounded-full border px-3 py-1 text-xs transition-colors",
                       active
                         ? "border-indigo-600 bg-indigo-600 text-white"
-                        : "border-slate-200 text-slate-600 hover:border-indigo-300 dark:border-slate-600 dark:text-slate-400"
+                        : "border-slate-200 text-slate-600 hover:border-indigo-300"
                     )}
                     onClick={() => {
                       const next = active

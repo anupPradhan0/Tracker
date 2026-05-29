@@ -55,7 +55,7 @@ export function SettingsPanel({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent onClose={() => setOpen(false)} className="relative max-h-[90vh] overflow-y-auto">
+        <DialogContent onClose={() => setOpen(false)} className="relative">
           <DialogHeader>
             <DialogTitle>Tracker settings</DialogTitle>
           </DialogHeader>
@@ -85,7 +85,7 @@ export function SettingsPanel({
                   {fixedExpenses.map((expense, index) => (
                     <li
                       key={`${expense.title}-${index}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-2 py-1.5 text-sm dark:border-slate-700"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
                     >
                       <span className="truncate">
                         {expense.title} — {currency}
@@ -105,27 +105,29 @@ export function SettingsPanel({
                   ))}
                 </ul>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   placeholder="Title"
                   value={newExpenseTitle}
                   onChange={(e) => setNewExpenseTitle(e.target.value)}
                 />
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Amount"
-                  className="w-28"
-                  value={newExpenseAmount}
-                  onChange={(e) => setNewExpenseAmount(e.target.value)}
-                />
-                <Button type="button" variant="outline" size="icon" onClick={addFixedExpense}>
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Amount"
+                    className="w-full sm:w-28"
+                    value={newExpenseAmount}
+                    onChange={(e) => setNewExpenseAmount(e.target.value)}
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={addFixedExpense}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3">
               <input
                 type="checkbox"
                 checked={weeklyReports}
@@ -138,7 +140,7 @@ export function SettingsPanel({
                 <p className="text-xs text-slate-500">
                   {emailConfigured
                     ? "Receive a summary with PDF attachment each week (via server cron)"
-                    : "Email is not configured on the server"}
+                    : "Enable after mail settings are saved in backend/.env"}
                 </p>
               </div>
             </label>

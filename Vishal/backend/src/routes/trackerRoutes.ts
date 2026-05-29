@@ -23,6 +23,13 @@ import {
   removeEntry,
   removePage,
 } from "../controllers/trackerController.js";
+import {
+  getFolders,
+  patchFolder,
+  postFolder,
+  removeFolder,
+} from "../controllers/folderController.js";
+import { createFolderSchema, updateFolderSchema } from "../validators/folder.validator.js";
 import { exportPdf } from "../controllers/exportController.js";
 import { emailStatus, sendWeeklyEmail } from "../controllers/emailController.js";
 
@@ -32,6 +39,11 @@ router.use(authMiddleware);
 
 router.get("/settings", getSettings);
 router.patch("/settings", validateBody(updateSettingsSchema), patchSettings);
+
+router.get("/folders", getFolders);
+router.post("/folders", validateBody(createFolderSchema), postFolder);
+router.patch("/folders/:id", validateBody(updateFolderSchema), patchFolder);
+router.delete("/folders/:id", removeFolder);
 
 router.get("/pages", getPages);
 router.get("/pages/default", getDefaultPage);

@@ -356,13 +356,13 @@ Compare trends across available days, category changes, and budget status. Be co
   });
 }
 
-export async function generateWeeklyAnalysisForEmail(
-  userId: string,
+export async function generateWeeklyReportInsight(
+  _userId: string,
   page: TrackerPageDto,
   currency: string,
   monthlyBudget: number,
   fixedExpenses: Array<{ title: string; amount: number }> = []
-): Promise<string> {
+): Promise<AIInsightResponse> {
   const weeklyBudget = getWeeklyBudget(monthlyBudget, fixedExpenses);
   const prompt = `
 Weekly spending report:
@@ -375,15 +375,29 @@ Give 4-6 bullet points: patterns, warnings, daily target for next week, encourag
 `;
 
   if (!isCohereConfigured()) {
-    const { buildWeeklyAnalysis } = await import("./weeklyReportService.js");
-    return buildWeeklyAnalysis(page, currency, weeklyBudget);
+    return buildFallbackWeekly(page, currency, monthlyBudget, fixedExpenses);
   }
 
   try {
-    const ai = await generateFinancialInsight(prompt);
-    return formatAiAnalysisForEmail(ai);
+    return await generateFinancialInsight(prompt);
   } catch {
-    const { buildWeeklyAnalysis } = await import("./weeklyReportService.js");
-    return buildWeeklyAnalysis(page, currency, weeklyBudget);
+    return buildFallbackWeekly(page, currency, monthlyBudget, fixedExpenses);
   }
+}
+
+export async function generateWeeklyAnalysisForEmail(
+  userId: string,
+  page: TrackerPageDto,
+  currency: string,
+  monthlyBudget: number,
+  fixedExpenses: Array<{ title: string; amount: number }> = []
+): Promise<string> {
+  const insight = await generateWeeklyReportInsight(
+    userId,
+    page,
+    currency,
+    monthlyBudget,
+    fixedExpenses
+  );
+  return formatAiAnalysisForEmail(insight);
 }

@@ -25,22 +25,24 @@ const features = [
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-white">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+      <header className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
         <div className="flex items-center gap-2 font-semibold text-blue-700">
-          <Wallet className="h-6 w-6" />
+          <Wallet className="h-6 w-6 shrink-0" />
           Finance Tracker
         </div>
-        <div className="flex gap-3">
-          <Link to={ROUTES.login}>
-            <Button variant="outline">Sign in</Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-3">
+          <Link to={ROUTES.login} className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
+              Sign in
+            </Button>
           </Link>
-          <Link to={ROUTES.register}>
-            <Button>Sign up</Button>
+          <Link to={ROUTES.register} className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">Sign up</Button>
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 pb-16 pt-8">
+      <main className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-8">
         <section className="animate-fade-in text-center">
           <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
             Modern finance tracking,
@@ -50,12 +52,14 @@ export function LandingPage() {
             A premium finance app to manage your money with confidence. Create an account
             or sign in to get started.
           </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Link to={ROUTES.register}>
-              <Button size="lg">Get started</Button>
+          <div className="mx-auto mt-8 flex w-full max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center sm:gap-4">
+            <Link to={ROUTES.register} className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto">
+                Get started
+              </Button>
             </Link>
-            <Link to={ROUTES.login}>
-              <Button size="lg" variant="outline">
+            <Link to={ROUTES.login} className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">
                 Sign in
               </Button>
             </Link>

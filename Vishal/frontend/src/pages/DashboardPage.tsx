@@ -6,19 +6,23 @@ import { DayCard } from "@/components/tracker/DayCard";
 import { EntryDialog } from "@/components/tracker/EntryDialog";
 import { AiAssistantPanel } from "@/components/tracker/AiAssistantPanel";
 import { SettingsPanel } from "@/components/tracker/SettingsPanel";
-import { PageSidebar } from "@/components/tracker/PageSidebar";
+import { FolderSidebar } from "@/components/tracker/FolderSidebar";
 import { useAuth } from "@/providers/AuthProvider";
 import {
+  useCreateFolder,
   useCreatePage,
   useDeleteEntry,
+  useDeleteFolder,
   useDeletePage,
   useEmailStatus,
   useExportPdf,
   useSaveEntry,
   useSendWeeklyEmail,
+  useTrackerFolders,
   useTrackerPage,
   useTrackerPages,
   useTrackerSettings,
+  useUpdateFolderExpanded,
   useUpdatePageTitle,
   useUpdateSettings,
 } from "@/hooks/useTracker";
@@ -28,6 +32,8 @@ import { cn } from "@/lib/utils";
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
+  const { data: folders = [], isLoading: foldersLoading, refetch: refetchFolders } =
+    useTrackerFolders();
   const { data: pages = [], isLoading: pagesLoading, refetch: refetchPages } =
     useTrackerPages();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
@@ -41,7 +47,10 @@ export function DashboardPage() {
   const { data: settings } = useTrackerSettings();
   const { data: emailStatus } = useEmailStatus();
 
+  const createFolder = useCreateFolder();
   const createPage = useCreatePage();
+  const deleteFolder = useDeleteFolder();
+  const updateFolderExpanded = useUpdateFolderExpanded();
   const deletePage = useDeletePage();
   const updateTitle = useUpdatePageTitle();
   const saveEntry = useSaveEntry();
@@ -63,20 +72,38 @@ export function DashboardPage() {
   const didSeedPage = useRef(false);
 
   useEffect(() => {
-    if (pagesLoading) return;
+    if (pagesLoading || foldersLoading) return;
     if (pages.length === 0) {
       if (!didSeedPage.current) {
         didSeedPage.current = true;
-        createPage.mutate(undefined, {
-          onSuccess: (newPage) => setSelectedPageId(newPage.id),
-        });
+        const seedPage = (folderId?: string) => {
+          createPage.mutate(folderId ? { folderId } : undefined, {
+            onSuccess: (newPage) => setSelectedPageId(newPage.id),
+          });
+        };
+        if (folders.length === 0) {
+          createFolder.mutate(
+            { name: "My Folder" },
+            { onSuccess: (folder) => seedPage(folder.id) }
+          );
+        } else {
+          seedPage(folders[0]!.id);
+        }
       }
       return;
     }
     if (!selectedPageId || !pages.some((p) => p.id === selectedPageId)) {
       setSelectedPageId(pages[0]!.id);
     }
-  }, [pages, pagesLoading, selectedPageId, createPage.mutate]);
+  }, [
+    pages,
+    folders,
+    pagesLoading,
+    foldersLoading,
+    selectedPageId,
+    createPage.mutate,
+    createFolder.mutate,
+  ]);
 
   useEffect(() => {
     if (page) {
@@ -101,7 +128,11 @@ export function DashboardPage() {
     return () => clearTimeout(t);
   }, [title, saveTitleDebounced]);
 
-  const isLoading = pagesLoading || pageLoading || (pages.length === 0 && createPage.isPending);
+  const isLoading =
+    pagesLoading ||
+    foldersLoading ||
+    pageLoading ||
+    (pages.length === 0 && (createPage.isPending || createFolder.isPending));
 
   if (isLoading) {
     return (
@@ -117,6 +148,7 @@ export function DashboardPage() {
         <p className="text-slate-600">Could not load your tracker.</p>
         <Button
           onClick={() => {
+            void refetchFolders();
             void refetchPages();
             void refetchPage();
           }}
@@ -135,14 +167,14 @@ export function DashboardPage() {
   const editingDayLabel = editing != null ? getDayLabel(editing.dayIndex) : "";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/40 to-violet-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
-      <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2 font-semibold text-indigo-700 dark:text-indigo-300">
-            <Wallet className="h-5 w-5" />
-            <span className="hidden sm:inline">Finance Tracker</span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/40 to-violet-50/30">
+      <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
+          <div className="flex min-w-0 items-center gap-2 font-semibold text-indigo-700">
+            <Wallet className="h-5 w-5 shrink-0" />
+            <span className="truncate text-sm sm:text-base">Finance Tracker</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -154,36 +186,59 @@ export function DashboardPage() {
             </Button>
             <SettingsPanel
               settings={settings}
-              emailConfigured={emailStatus?.configured ?? false}
+              emailConfigured={emailStatus?.ready ?? emailStatus?.configured ?? false}
               isSaving={updateSettings.isPending}
               onSave={(data) => updateSettings.mutate(data)}
             />
             <Button
               variant="outline"
+              size="icon"
               onClick={() => logout.mutate()}
               disabled={logout.isPending}
-              className="hidden sm:inline-flex"
+              aria-label="Logout"
+              title="Logout"
             >
               <LogOut className="h-4 w-4" />
-              Logout
             </Button>
           </div>
         </div>
       </header>
 
       <div className="mx-auto flex max-w-7xl flex-col md:flex-row">
-        <PageSidebar
+        <FolderSidebar
+          folders={folders}
           pages={pages}
           activePageId={selectedPageId}
-          isCreating={createPage.isPending}
-          isDeleting={deletePage.isPending}
-          onSelect={setSelectedPageId}
-          onCreate={() =>
-            createPage.mutate(undefined, {
-              onSuccess: (newPage) => setSelectedPageId(newPage.id),
+          isCreatingFolder={createFolder.isPending}
+          isCreatingPage={createPage.isPending}
+          isDeletingFolder={deleteFolder.isPending}
+          isDeletingPage={deletePage.isPending}
+          onSelectPage={setSelectedPageId}
+          onCreateFolder={(parentFolderId) =>
+            createFolder.mutate(
+              parentFolderId != null ? { parentFolderId } : {}
+            )
+          }
+          onDeleteFolder={(folderId) =>
+            deleteFolder.mutate(folderId, {
+              onSuccess: async () => {
+                const { data: freshPages } = await refetchPages();
+                if (!freshPages?.some((p) => p.id === selectedPageId)) {
+                  setSelectedPageId(freshPages?.[0]?.id ?? null);
+                }
+              },
             })
           }
-          onDelete={(pageId) =>
+          onToggleFolderExpanded={(folderId, isExpanded) =>
+            updateFolderExpanded.mutate({ folderId, isExpanded })
+          }
+          onCreatePage={(folderId) =>
+            createPage.mutate(
+              { folderId },
+              { onSuccess: (newPage) => setSelectedPageId(newPage.id) }
+            )
+          }
+          onDeletePage={(pageId) =>
             deletePage.mutate(pageId, {
               onSuccess: () => {
                 const remaining = pages.filter((p) => p.id !== pageId);
@@ -193,30 +248,30 @@ export function DashboardPage() {
           }
         />
 
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">
+        <main className="min-w-0 flex-1 px-3 py-4 pb-safe sm:px-6 sm:py-8">
           <section
             className={cn(
-              "mb-8 rounded-2xl border p-5 shadow-lg transition-shadow sm:p-6",
-              "border-indigo-100/80 bg-white/90 dark:border-indigo-900/50 dark:bg-slate-900/90",
+              "mb-6 rounded-2xl border p-4 shadow-lg transition-shadow sm:mb-8 sm:p-6",
+              "border-indigo-100/80 bg-white/90",
               "hover:shadow-xl"
             )}
           >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 max-w-full flex-1">
                 <div className="mb-2 flex items-center gap-2">
-                  <span className="text-3xl">{page.icon}</span>
+                  <span className="shrink-0 text-2xl sm:text-3xl">{page.icon}</span>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="min-w-0 flex-1 truncate border-none bg-transparent text-xl font-bold text-slate-900 outline-none focus:ring-0 sm:text-2xl dark:text-white"
+                    className="min-w-0 flex-1 truncate border-none bg-transparent text-lg font-bold text-slate-900 outline-none focus:ring-0 sm:text-2xl"
                     placeholder="Untitled Page"
                   />
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600 dark:text-slate-400">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
                   <span>
                     Total:{" "}
-                    <strong className="text-indigo-700 dark:text-indigo-300">
+                    <strong className="text-indigo-700">
                       {formatCurrency(page.pageTotal, currency)}
                     </strong>
                   </span>
@@ -224,8 +279,8 @@ export function DashboardPage() {
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-medium",
                       budgetStatus.isOverBudget
-                        ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                        : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-emerald-100 text-emerald-700"
                     )}
                   >
                     Status: {budgetStatus.label}
@@ -234,14 +289,15 @@ export function DashboardPage() {
                     <span className="text-xs text-slate-400">Saving title…</span>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 truncate text-xs text-slate-500">
                   Signed in as {user?.name} · {user?.email}
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
                 <Button
                   variant="outline"
+                  className="w-full sm:w-auto"
                   disabled={exportPdf.isPending}
                   onClick={() =>
                     exportPdf.mutate({ pageId: page.id, title: page.title })
@@ -252,13 +308,10 @@ export function DashboardPage() {
                 </Button>
                 <Button
                   variant="default"
-                  disabled={sendEmail.isPending || !emailStatus?.configured}
+                  className="w-full sm:w-auto"
+                  disabled={sendEmail.isPending}
                   onClick={() => sendEmail.mutate(page.id)}
-                  title={
-                    emailStatus?.configured
-                      ? "Email weekly report with PDF"
-                      : "Configure MAIL_* env vars on server"
-                  }
+                  title="Email weekly report with PDF attachment"
                 >
                   <Mail className="h-4 w-4" />
                   {sendEmail.isPending ? "Sending…" : "Email report"}
@@ -267,7 +320,7 @@ export function DashboardPage() {
             </div>
 
             {(settings?.monthlyBudget ?? 0) > 0 && (
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-4 dark:border-slate-800">
+              <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <p className="text-slate-500">Monthly budget</p>
                   <p className="font-semibold">
@@ -288,7 +341,7 @@ export function DashboardPage() {
                     {formatCurrency(budgetStatus.weeklyBudget, currency)}
                   </p>
                 </div>
-                <div className="col-span-2 sm:col-span-1">
+                <div>
                   <p className="text-slate-500">Entries this week</p>
                   <p className="font-semibold">
                     {page.days.reduce((n, d) => n + d.entries.length, 0)}
@@ -298,7 +351,7 @@ export function DashboardPage() {
             )}
           </section>
 
-          <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
             {page.days.map((day) => (
               <DayCard
                 key={day.id}
@@ -354,16 +407,6 @@ export function DashboardPage() {
         }}
       />
 
-      <div className="fixed bottom-4 right-4 sm:hidden">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => logout.mutate()}
-          aria-label="Logout"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
-      </div>
     </div>
   );
 }

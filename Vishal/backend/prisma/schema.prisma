@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id           String           @id @default(cuid())
-  name         String
-  email        String           @unique
-  password     String
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  trackerPages TrackerPage[]
-  settings     TrackerSettings?
-  aiSummaries  AISummary[]
+  id             String           @id @default(cuid())
+  name           String
+  email          String           @unique
+  password       String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  trackerPages   TrackerPage[]
+  trackerFolders TrackerFolder[]
+  settings       TrackerSettings?
+  aiSummaries    AISummary[]
 }
 
 model AISummary {
@@ -51,17 +52,38 @@ model TrackerSettings {
   updatedAt            DateTime @updatedAt
 }
 
+model TrackerFolder {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String          @default("New Folder")
+  parentFolderId String?
+  parentFolder   TrackerFolder?  @relation("FolderTree", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  children       TrackerFolder[] @relation("FolderTree")
+  pages          TrackerPage[]
+  order          Int             @default(0)
+  isExpanded     Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([userId, parentFolderId])
+  @@index([userId, order])
+}
+
 model TrackerPage {
-  id        String       @id @default(cuid())
+  id        String         @id @default(cuid())
   userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String       @default("Untitled Page")
-  icon      String       @default("📄")
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folderId  String?
+  folder    TrackerFolder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  title     String         @default("Untitled Page")
+  icon      String         @default("📄")
   days      TrackerDay[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([userId])
+  @@index([userId, folderId])
 }
 
 model TrackerDay {

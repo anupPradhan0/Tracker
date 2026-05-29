@@ -23,8 +23,8 @@ export function PageSidebar({
   onDelete,
 }: PageSidebarProps) {
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-indigo-100/80 bg-white/90 dark:border-slate-800 dark:bg-slate-900/90 md:w-56 md:border-b-0 md:border-r lg:w-64">
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-3 dark:border-slate-800">
+    <aside className="flex w-full shrink-0 flex-col border-b border-indigo-100/80 bg-white/90 md:w-56 md:border-b-0 md:border-r lg:w-64">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pages</p>
         <Button
           variant="outline"
@@ -39,7 +39,7 @@ export function PageSidebar({
         </Button>
       </div>
 
-      <nav className="flex gap-2 overflow-x-auto p-2 md:flex-col md:overflow-x-visible md:overflow-y-auto md:p-2">
+      <nav className="flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-px-2 p-2 [-webkit-overflow-scrolling:touch] md:flex-col md:snap-none md:overflow-x-visible md:overflow-y-auto md:p-2">
         {pages.map((page) => {
           const isActive = page.id === activePageId;
           const entryCount = page.days.reduce((n, d) => n + d.entries.length, 0);
@@ -48,10 +48,10 @@ export function PageSidebar({
             <div
               key={page.id}
               className={cn(
-                "group flex min-w-[140px] shrink-0 items-center gap-1 rounded-xl border px-2 py-1.5 transition-colors md:min-w-0",
+                "group flex min-h-11 min-w-[min(100%,9rem)] shrink-0 snap-start items-center gap-1 rounded-xl border px-2 py-1.5 transition-colors md:min-w-0",
                 isActive
-                  ? "border-indigo-200 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-950/50"
-                  : "border-transparent hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50"
+                  ? "border-indigo-200 bg-indigo-50"
+                  : "border-transparent hover:border-slate-200 hover:bg-slate-50"
               )}
             >
               <button
@@ -61,7 +61,7 @@ export function PageSidebar({
               >
                 <span className="flex items-center gap-1.5">
                   <span className="text-base leading-none">{page.icon}</span>
-                  <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <span className="truncate text-sm font-medium text-slate-800">
                     {page.title}
                   </span>
                 </span>
@@ -73,7 +73,7 @@ export function PageSidebar({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                  className="h-7 w-7 shrink-0 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                   disabled={isDeleting}
                   onClick={() => {
                     if (

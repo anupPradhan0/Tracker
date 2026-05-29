@@ -1,7 +1,45 @@
+import { existsSync } from "fs";
+import path from "path";
 import { config } from "dotenv";
 import { z } from "zod";
 
-config();
+function findBackendEnvPath(): string | undefined {
+  const seen = new Set<string>();
+  const tryPath = (candidate: string): string | undefined => {
+    const resolved = path.resolve(candidate);
+    if (seen.has(resolved) || !existsSync(resolved)) {
+      return undefined;
+    }
+    seen.add(resolved);
+    return resolved;
+  };
+
+  const roots = new Set<string>([process.cwd()]);
+  if (process.env.INIT_CWD) {
+    roots.add(process.env.INIT_CWD);
+  }
+
+  for (const root of roots) {
+    const hit =
+      tryPath(path.join(root, "backend", ".env")) ??
+      tryPath(path.join(root, "Vishal", "backend", ".env")) ??
+      tryPath(path.join(root, ".env"));
+    if (hit) {
+      return hit;
+    }
+  }
+
+  return undefined;
+}
+
+function loadEnvFiles(): void {
+  const backendEnv = findBackendEnvPath();
+  if (backendEnv) {
+    config({ path: backendEnv });
+  }
+}
+
+loadEnvFiles();
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -17,6 +55,7 @@ const envSchema = z.object({
   MAIL_PORT: z.coerce.number().default(587),
   MAIL_USER: z.string().optional(),
   MAIL_PASSWORD: z.string().optional(),
+  MAIL_FROM: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
   COHERE_MODEL: z.string().default("command-r-plus-08-2024"),
