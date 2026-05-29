@@ -35,9 +35,48 @@
   border-color: var(--color-border);
 }
 
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  min-height: 100dvh;
+}
+
+/* iOS notch / home indicator */
+.safe-area-pb {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pb-safe-main {
+  padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .pb-safe-main {
+    padding-bottom: 2rem;
+  }
+}
+
+/* Prevent double-tap zoom delay on controls */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  [role="tab"] {
+    touch-action: manipulation;
+  }
+}
+
+/* Native month picker has a wide min-width and overflows on narrow screens */
+input[type="month"] {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
 }

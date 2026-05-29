@@ -12,7 +12,7 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="flex flex-col items-center justify-center px-4 py-12 text-center sm:py-16">
       <div className="mb-4 rounded-full bg-[var(--color-muted)] p-4">
         <Icon className="h-8 w-8 text-[var(--color-muted-foreground)]" />
       </div>

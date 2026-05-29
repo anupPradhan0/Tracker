@@ -18,27 +18,41 @@ Production-grade mobile-first expense tracker with React + Vite frontend, Expres
 
 ## Quick start
 
+### Option A — Docker (full stack)
+
 ```bash
 cd Anurag
 
-# Copy env and generate encryption key (32-byte base64)
+cp .env.example .env
+# Set JWT_* secrets and ENCRYPTION_KEY (see below)
+
+pnpm docker:up:all
+```
+
+- **Web:** http://localhost:5173 (nginx serves the built app, proxies `/api` to the API container)
+- **API:** http://localhost:4000/api/v1/health
+
+Postgres only (run web/API on host with `pnpm dev`):
+
+```bash
+docker compose up -d
+pnpm install && pnpm db:push && pnpm dev
+```
+
+### Option B — Local dev (Postgres in Docker)
+
+```bash
+cd Anurag
+
 cp .env.example .env
 # On PowerShell: [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
 
-# Start PostgreSQL
 docker compose up -d
 
-# Install dependencies
 pnpm install
-
-# Build shared packages
 pnpm --filter @anurag/types build
 pnpm --filter @anurag/utils build
-
-# Database migrate
 pnpm db:push
-
-# Run dev (web + server)
 pnpm dev
 ```
 
@@ -87,8 +101,21 @@ Optional: `MAIL_*` for email AI summaries.
 | `pnpm db:push` | Push Prisma schema |
 | `pnpm db:studio` | Open Prisma Studio |
 
+## Docker
+
+| Command | Description |
+|---------|-------------|
+| `pnpm docker:up` | Start Postgres only |
+| `pnpm docker:up:all` | Build & start Postgres + API + web (`--profile app`) |
+| `pnpm docker:down` | Stop all containers |
+
+Images:
+
+- **api** — Express API; runs `prisma db push` on start, then `node dist/index.js`
+- **web** — nginx + Vite production build; `VITE_API_URL=/api/v1` with reverse proxy to `api:4000`
+
 ## Deployment notes
 
-- Run `prisma migrate deploy` on production
+- Run `prisma migrate deploy` on production (or `db push` for early setups)
 - Set `NODE_ENV=production`, secure cookies, strong secrets
-- Serve `apps/web` build via CDN; API on Railway/Render/Fly
+- Use `docker compose --profile app up -d --build` or serve `apps/web` via CDN with API on Railway/Render/Fly

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/shared/page-header";
 import { toast } from "sonner";
 
 interface BudgetData {
@@ -48,15 +49,15 @@ export function BudgetsPage() {
       ? Math.min(100, (parseFloat(data.spent) / parseFloat(data.amount)) * 100)
       : 0;
 
+  const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Monthly budget</h1>
+    <div className="space-y-5 sm:space-y-6">
+      <PageHeader title="Monthly budget" description={monthLabel} />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {now.toLocaleString("en-US", { month: "long", year: "numeric" })}
-          </CardTitle>
+          <CardTitle className="text-base">{monthLabel}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
@@ -64,7 +65,7 @@ export function BudgetsPage() {
           ) : (
             <>
               <div>
-                <div className="mb-2 flex justify-between text-sm">
+                <div className="mb-2 flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                   <span>Spent: {formatCurrency(data?.spent ?? "0", currency)}</span>
                   <span>Budget: {formatCurrency(data?.amount ?? "0", currency)}</span>
                 </div>
@@ -82,15 +83,19 @@ export function BudgetsPage() {
               </div>
 
               <div className="space-y-2 border-t border-[var(--color-border)] pt-4">
-                <Label>Set monthly limit</Label>
-                <div className="flex gap-2">
+                <Label htmlFor="budget-amount">Set monthly limit</Label>
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Input
+                    id="budget-amount"
                     type="number"
+                    inputMode="decimal"
                     placeholder="e.g. 50000"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
+                    className="flex-1"
                   />
                   <Button
+                    className="w-full sm:w-auto sm:shrink-0"
                     onClick={() => save.mutate(parseFloat(amount))}
                     disabled={!amount || save.isPending}
                   >

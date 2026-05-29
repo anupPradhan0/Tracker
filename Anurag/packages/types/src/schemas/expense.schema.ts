@@ -1,10 +1,13 @@
 import { z } from "zod";
 
+export const expensePeriodSchema = z.enum(["WEEKLY", "MONTHLY"]);
+
 export const createExpenseSchema = z.object({
   amount: z.coerce.number().positive("Amount must be positive"),
   description: z.string().max(500).optional(),
   date: z.string().datetime({ offset: true }).or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
   categoryId: z.string().uuid(),
+  period: expensePeriodSchema.default("MONTHLY"),
   currency: z.string().length(3).optional(),
 });
 
@@ -17,6 +20,7 @@ export const expenseQuerySchema = z.object({
   categoryId: z.string().uuid().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
+  period: expensePeriodSchema.optional(),
   sort: z.enum(["date_desc", "date_asc", "amount_desc", "amount_asc"]).default("date_desc"),
 });
 
