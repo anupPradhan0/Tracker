@@ -11,14 +11,17 @@ export interface ApiErrorBody {
   };
 }
 
-export type ApiResponse<T> = ApiSuccess<T> | ApiErrorBody;
+export interface ApiConflictBody {
+  success: false;
+  message: string;
+}
+
+export type ApiResponse<T> = ApiSuccess<T> | ApiErrorBody | ApiConflictBody;
 
 export interface SafeUser {
   id: string;
   name: string;
   email: string;
-  image: string | null;
-  provider: string;
   createdAt: Date;
 }
 

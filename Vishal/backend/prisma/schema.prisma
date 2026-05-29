@@ -11,8 +11,7 @@ model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
-  image     String?
-  provider  String   @default("google")
+  password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

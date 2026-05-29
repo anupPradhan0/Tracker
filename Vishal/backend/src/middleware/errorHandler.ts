@@ -10,6 +10,11 @@ export function errorHandler(
   _next: NextFunction
 ): void {
   if (err instanceof ApiError) {
+    if (err.code === "USER_EXISTS") {
+      res.status(409).json({ success: false, message: "User already exists" });
+      return;
+    }
+
     const body: ApiErrorBody = {
       success: false,
       error: { code: err.code, message: err.message },

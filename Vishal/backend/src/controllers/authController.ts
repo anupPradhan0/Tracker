@@ -1,24 +1,24 @@
 import type { Request, Response } from "express";
-import { env } from "../config/env.js";
+import { loginUser, registerUser } from "../services/authService.js";
 import { findUserById } from "../services/userService.js";
 import { clearAuthCookie, setAuthCookie } from "../services/tokenService.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import type { LoginInput, RegisterInput } from "../validators/auth.validator.js";
 
-interface GoogleAuthUser {
-  token: string;
-}
+export const register = asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as RegisterInput;
+  const { user, token } = await registerUser(body);
+  setAuthCookie(res, token);
+  sendSuccess(res, { user }, 201);
+});
 
-export const googleCallback = asyncHandler(async (req: Request, res: Response) => {
-  const authUser = req.user as unknown as GoogleAuthUser | undefined;
-
-  if (!authUser?.token) {
-    throw new ApiError(401, "AUTH_FAILED", "Google authentication failed");
-  }
-
-  setAuthCookie(res, authUser.token);
-  res.redirect(`${env.FRONTEND_URL}/dashboard`);
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const body = req.body as LoginInput;
+  const { user, token } = await loginUser(body);
+  setAuthCookie(res, token);
+  sendSuccess(res, { user });
 });
 
 export const getMe = asyncHandler(async (req: Request, res: Response) => {

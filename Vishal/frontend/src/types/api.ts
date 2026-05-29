@@ -11,4 +11,7 @@ export interface ApiErrorBody {
   };
 }
 
-export type ApiResponse<T> = ApiSuccess<T> | ApiErrorBody;
+export interface ApiConflictBody {
+  success: false;
+  message: string;
+}

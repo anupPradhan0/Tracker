@@ -1,49 +1,51 @@
-import type { Profile } from "passport-google-oauth20";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import type { SafeUser } from "../types/api.js";
+import { ApiError } from "../utils/ApiError.js";
 
 function toSafeUser(user: {
   id: string;
   name: string;
   email: string;
-  image: string | null;
-  provider: string;
   createdAt: Date;
 }): SafeUser {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    image: user.image,
-    provider: user.provider,
     createdAt: user.createdAt,
   };
 }
 
-export async function findOrCreateFromGoogle(profile: Profile) {
-  const email = profile.emails?.[0]?.value;
-  if (!email) {
-    throw new Error("Google profile missing email");
+export async function createUser(data: {
+  name: string;
+  email: string;
+  passwordHash: string;
+}): Promise<SafeUser> {
+  try {
+    const user = await prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email.toLowerCase(),
+        password: data.passwordHash,
+      },
+    });
+    return toSafeUser(user);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw new ApiError(409, "USER_EXISTS", "User already exists");
+    }
+    throw error;
   }
+}
 
-  const name = profile.displayName || email.split("@")[0];
-  const image = profile.photos?.[0]?.value ?? null;
-
-  const user = await prisma.user.upsert({
-    where: { email },
-    create: {
-      email,
-      name,
-      image,
-      provider: "google",
-    },
-    update: {
-      name,
-      image,
-    },
+export async function findByEmail(email: string) {
+  return prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
   });
-
-  return user;
 }
 
 export async function findUserById(id: string): Promise<SafeUser | null> {

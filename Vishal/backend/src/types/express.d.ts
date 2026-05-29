@@ -2,8 +2,8 @@ import type { JwtPayload } from "./api.js";
 
 declare global {
   namespace Express {
-    interface User extends JwtPayload {
-      id: string;
+    interface Request {
+      user?: JwtPayload & { id: string };
     }
   }
 }

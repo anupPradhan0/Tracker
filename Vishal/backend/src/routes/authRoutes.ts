@@ -1,28 +1,13 @@
 import { Router } from "express";
-import passport from "passport";
-import { env } from "../config/env.js";
-import { googleCallback, getMe, logout } from "../controllers/authController.js";
+import { register, login, getMe, logout } from "../controllers/authController.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { validateBody } from "../middleware/validate.middleware.js";
+import { loginSchema, registerSchema } from "../validators/auth.validator.js";
 
 const router = Router();
 
-router.get(
-  "/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-    session: false,
-  })
-);
-
-router.get(
-  "/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${env.FRONTEND_URL}/login?error=auth_failed`,
-  }),
-  googleCallback
-);
-
+router.post("/register", validateBody(registerSchema), register);
+router.post("/login", validateBody(loginSchema), login);
 router.get("/me", authMiddleware, getMe);
 router.post("/logout", logout);
 

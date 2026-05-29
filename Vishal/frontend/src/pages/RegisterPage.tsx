@@ -17,15 +17,16 @@ import {
 } from "@/components/ui/form";
 import { ROUTES } from "@/constants/auth";
 import { useAuth } from "@/providers/AuthProvider";
-import { loginSchema, type LoginFormValues } from "@/lib/validations/auth";
+import { registerSchema, type RegisterFormValues } from "@/lib/validations/auth";
 
-export function LoginPage() {
-  const { user, isLoading, login } = useAuth();
+export function RegisterPage() {
+  const { user, isLoading, register: registerMutation } = useAuth();
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
     mode: "onChange",
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
@@ -39,27 +40,40 @@ export function LoginPage() {
     return <Navigate to={ROUTES.dashboard} replace />;
   }
 
-  const onSubmit = (values: LoginFormValues) => {
-    login.mutate(values);
+  const onSubmit = (values: RegisterFormValues) => {
+    registerMutation.mutate(values);
   };
 
   return (
     <AuthLayout>
       <div className="flex min-h-screen items-center justify-center p-4">
         <AuthCard
-          title="Welcome back"
-          description="Sign in to your finance workspace"
+          title="Create your account"
+          description="Start managing your finances with confidence"
           footer={
             <span className="text-slate-600">
-              Don&apos;t have an account?{" "}
-              <Link to={ROUTES.register} className="font-medium text-blue-600 hover:underline">
-                Create one
+              Already have an account?{" "}
+              <Link to={ROUTES.login} className="font-medium text-blue-600 hover:underline">
+                Sign in
               </Link>
             </span>
           }
         >
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your name" autoComplete="name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"
@@ -89,7 +103,8 @@ export function LoginPage() {
                         value={field.value}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
-                        disabled={login.isPending}
+                        disabled={registerMutation.isPending}
+                        showCounter
                       />
                     </FormControl>
                     <FormMessage />
@@ -100,9 +115,9 @@ export function LoginPage() {
                 type="submit"
                 className="w-full"
                 size="lg"
-                disabled={!form.formState.isValid || login.isPending}
+                disabled={!form.formState.isValid || registerMutation.isPending}
               >
-                {login.isPending ? "Signing in..." : "Sign in"}
+                {registerMutation.isPending ? "Creating account..." : "Create account"}
               </Button>
             </form>
           </Form>

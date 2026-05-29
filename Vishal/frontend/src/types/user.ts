@@ -2,7 +2,16 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  image: string | null;
-  provider: string;
   createdAt: string;
+}
+
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
 }

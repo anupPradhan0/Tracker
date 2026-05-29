@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { BarChart3, Shield, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ROUTES } from "@/constants/auth";
 
 const features = [
   {
@@ -17,7 +18,7 @@ const features = [
   {
     icon: Shield,
     title: "Secure sign-in",
-    description: "Google authentication with encrypted session handling.",
+    description: "Email and password authentication with encrypted session handling.",
   },
 ];
 
@@ -29,9 +30,14 @@ export function LandingPage() {
           <Wallet className="h-6 w-6" />
           Finance Tracker
         </div>
-        <Link to="/login">
-          <Button variant="outline">Sign in</Button>
-        </Link>
+        <div className="flex gap-3">
+          <Link to={ROUTES.login}>
+            <Button variant="outline">Sign in</Button>
+          </Link>
+          <Link to={ROUTES.register}>
+            <Button>Sign up</Button>
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 pb-16 pt-8">
@@ -41,19 +47,27 @@ export function LandingPage() {
             <span className="text-blue-600"> built for clarity</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
-            A premium finance app to manage your money with confidence. Sign in with
-            Google to get started.
+            A premium finance app to manage your money with confidence. Create an account
+            or sign in to get started.
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            <Link to="/login">
+            <Link to={ROUTES.register}>
               <Button size="lg">Get started</Button>
+            </Link>
+            <Link to={ROUTES.login}>
+              <Button size="lg" variant="outline">
+                Sign in
+              </Button>
             </Link>
           </div>
         </section>
 
         <section className="mt-16 grid gap-6 sm:grid-cols-3">
           {features.map(({ icon: Icon, title, description }) => (
-            <Card key={title} className="animate-fade-in">
+            <Card
+              key={title}
+              className="animate-fade-in border-white/40 bg-white/70 shadow-lg shadow-blue-100/40 backdrop-blur-sm"
+            >
               <CardContent className="p-6">
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                   <Icon className="h-5 w-5" />
