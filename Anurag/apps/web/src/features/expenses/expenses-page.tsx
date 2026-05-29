@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Receipt } from "lucide-react";
-import { formatCurrency } from "@anurag/utils";
+import {
+  formatCurrency,
+  formatLocalDate,
+  parseMonthKey,
+  toISODateString,
+  toMonthKey,
+} from "@anurag/utils";
 import { useExpenses, useDeleteExpense } from "@/hooks/use-expenses";
 import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "@/components/ui/button";
@@ -22,10 +28,6 @@ import { toast } from "sonner";
 
 type WeekFilter = "ALL" | "W1" | "W2" | "W3" | "W4";
 
-function toIsoDate(d: Date) {
-  return d.toISOString().split("T")[0]!;
-}
-
 function monthStartEnd(monthValue: string) {
   const [y, m] = monthValue.split("-").map((n) => Number(n));
   const start = new Date(y!, (m ?? 1) - 1, 1, 0, 0, 0, 0);
@@ -39,7 +41,7 @@ function weekRangeInMonth(monthValue: string, week: Exclude<WeekFilter, "ALL">) 
   const lastDay = end.getDate();
   const idx = week === "W1" ? 0 : week === "W2" ? 1 : week === "W3" ? 2 : 3;
   const fromDay = dayStart + idx * 7;
-  const toDay = Math.min(fromDay + 6, lastDay);
+  const toDay = week === "W4" ? lastDay : Math.min(fromDay + 6, lastDay);
   const from = new Date(start.getFullYear(), start.getMonth(), fromDay, 0, 0, 0, 0);
   const to = new Date(start.getFullYear(), start.getMonth(), toDay, 23, 59, 59, 999);
   return { start: from, end: to };
@@ -67,10 +69,7 @@ const MONTH_OPTIONS = buildMonthOptions();
 export function ExpensesPage() {
   const currency = useAuthStore((s) => s.user?.currency) ?? "INR";
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [month, setMonth] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  });
+  const [month, setMonth] = useState(() => toMonthKey(new Date()));
   const [week, setWeek] = useState<WeekFilter>("ALL");
 
   const dateRange = week === "ALL" ? monthStartEnd(month) : weekRangeInMonth(month, week);
@@ -78,8 +77,8 @@ export function ExpensesPage() {
   const { data, isLoading } = useExpenses({
     sort: "date_desc",
     limit: 50,
-    from: toIsoDate(dateRange.start),
-    to: toIsoDate(dateRange.end),
+    from: toISODateString(dateRange.start),
+    to: toISODateString(dateRange.end),
   });
   const deleteExpense = useDeleteExpense();
 
@@ -106,18 +105,19 @@ export function ExpensesPage() {
   };
 
   const addPeriod = week === "ALL" ? "MONTHLY" : "WEEKLY";
-  const todayIso = toIsoDate(new Date());
-  const fromIso = toIsoDate(dateRange.start);
-  const toIso = toIsoDate(dateRange.end);
+  const todayIso = toISODateString(new Date());
+  const fromIso = toISODateString(dateRange.start);
+  const toIso = toISODateString(dateRange.end);
   const defaultDate = todayIso >= fromIso && todayIso <= toIso ? todayIso : fromIso;
   const addHref = `/expenses/new?period=${addPeriod}&date=${encodeURIComponent(
     defaultDate
   )}&from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`;
 
+  const monthLabel = parseMonthKey(month);
   const periodHint =
     week === "ALL"
-      ? new Date(month + "-01").toLocaleDateString("en-US", { month: "long", year: "numeric" })
-      : `${week.replace("W", "Week ")} · ${new Date(month + "-01").toLocaleDateString("en-US", { month: "short", year: "numeric" })}`;
+      ? monthLabel.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+      : `${week.replace("W", "Week ")} · ${monthLabel.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`;
 
   return (
     <div className="min-w-0 max-w-full space-y-5 overflow-x-hidden sm:space-y-6">
@@ -206,7 +206,7 @@ export function ExpensesPage() {
                     {e.description || e.category?.name}
                   </p>
                   <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-                    {e.category?.name} · {new Date(e.date).toLocaleDateString()} ·{" "}
+                    {e.category?.name} · {formatLocalDate(e.date)} ·{" "}
                     <span className="capitalize">{e.period.toLowerCase()}</span>
                   </p>
                   <p className="mt-2 text-lg font-semibold sm:hidden">

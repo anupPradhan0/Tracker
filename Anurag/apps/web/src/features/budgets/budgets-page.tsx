@@ -96,7 +96,14 @@ export function BudgetsPage() {
                   />
                   <Button
                     className="w-full sm:w-auto sm:shrink-0"
-                    onClick={() => save.mutate(parseFloat(amount))}
+                    onClick={() => {
+                      const parsed = parseFloat(amount);
+                      if (!Number.isFinite(parsed) || parsed <= 0) {
+                        toast.error("Please enter a valid positive budget limit");
+                        return;
+                      }
+                      save.mutate(parsed);
+                    }}
                     disabled={!amount || save.isPending}
                   >
                     Save

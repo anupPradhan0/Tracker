@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { AlertTriangle, Mail, Plus } from "lucide-react";
-import { formatCurrency } from "@anurag/utils";
+import { formatCurrency, formatLocalDate } from "@anurag/utils";
 import { useAnalyticsSummary } from "@/hooks/use-analytics";
 import { useSendExpenseEmail } from "@/hooks/use-send-expense-email";
 import { useAuthStore } from "@/stores/auth-store";
@@ -145,7 +145,7 @@ export function DashboardPage() {
                     {e.description || e.category?.name || "Expense"}
                   </p>
                   <p className="text-[var(--color-muted-foreground)]">
-                    {new Date(e.date).toLocaleDateString()}
+                    {formatLocalDate(e.date)}
                   </p>
                 </div>
                 <span className="shrink-0 font-semibold">
