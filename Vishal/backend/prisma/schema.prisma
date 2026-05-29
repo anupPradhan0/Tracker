@@ -45,6 +45,7 @@ model TrackerSettings {
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   currency             String   @default("₹")
   monthlyBudget        Float    @default(0)
+  fixedExpenses        Json     @default("[]")
   weeklyReportsEnabled Boolean  @default(false)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

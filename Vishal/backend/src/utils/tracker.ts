@@ -35,3 +35,45 @@ export function createEmptyDaysPayload() {
     entries: [] as never[],
   }));
 }
+
+export interface FixedExpenseDto {
+  title: string;
+  amount: number;
+}
+
+export function parseFixedExpenses(value: unknown): FixedExpenseDto[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (item): item is { title: string; amount: number } =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof (item as { title?: unknown }).title === "string" &&
+        typeof (item as { amount?: unknown }).amount === "number" &&
+        Number.isFinite((item as { amount: number }).amount)
+    )
+    .map((item) => ({
+      title: item.title.trim(),
+      amount: Math.max(0, item.amount),
+    }))
+    .filter((item) => item.title.length > 0);
+}
+
+export function sumFixedExpenses(fixedExpenses: FixedExpenseDto[]): number {
+  return fixedExpenses.reduce((sum, item) => sum + item.amount, 0);
+}
+
+export function getRealMonthlyBudget(
+  monthlyBudget: number,
+  fixedExpenses: FixedExpenseDto[]
+): number {
+  return Math.max(0, monthlyBudget - sumFixedExpenses(fixedExpenses));
+}
+
+export function getWeeklyBudget(
+  monthlyBudget: number,
+  fixedExpenses: FixedExpenseDto[]
+): number {
+  const realMonthly = getRealMonthlyBudget(monthlyBudget, fixedExpenses);
+  return realMonthly > 0 ? realMonthly / 4 : 0;
+}

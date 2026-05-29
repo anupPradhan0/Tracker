@@ -1,6 +1,11 @@
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
-import { getDayLabel, formatCurrency } from "../utils/tracker.js";
+import {
+  getDayLabel,
+  formatCurrency,
+  getWeeklyBudget,
+  sumFixedExpenses,
+} from "../utils/tracker.js";
 import {
   generateFinancialInsight,
   isCohereConfigured,
@@ -91,10 +96,12 @@ async function persistSummary(
 function buildFallbackWeekly(
   page: TrackerPageDto,
   currency: string,
-  monthlyBudget: number
+  monthlyBudget: number,
+  fixedExpenses: Array<{ title: string; amount: number }>
 ): AIInsightResponse {
-  const weeklyBudget = monthlyBudget / 4;
-  const isOver = page.pageTotal > weeklyBudget;
+  const weeklyBudget = getWeeklyBudget(monthlyBudget, fixedExpenses);
+  const isOver = weeklyBudget > 0 && page.pageTotal > weeklyBudget;
+  const fixedTotal = sumFixedExpenses(fixedExpenses);
 
   return {
     summary: `Weekly total: ${formatCurrency(page.pageTotal, currency)}. ${
@@ -103,6 +110,9 @@ function buildFallbackWeekly(
     insights: [
       `Total entries: ${page.days.reduce((n, d) => n + d.entries.length, 0)}`,
       `Monthly budget: ${formatCurrency(monthlyBudget, currency)}`,
+      fixedTotal > 0
+        ? `Fixed expenses: ${formatCurrency(fixedTotal, currency)}`
+        : "No fixed expenses configured",
       `Weekly target: ${formatCurrency(weeklyBudget, currency)}`,
     ],
     recommendations: [
@@ -137,7 +147,8 @@ export async function generateWeeklySummary(
   const settings = await getOrCreateSettings(userId);
   const date = weekStartDateString();
   const scopeKey = `weekly:${date}:${pageId}`;
-  const weeklyBudget = settings.monthlyBudget / 4;
+  const weeklyBudget = getWeeklyBudget(settings.monthlyBudget, settings.fixedExpenses);
+  const fixedTotal = sumFixedExpenses(settings.fixedExpenses);
 
   const categories: Record<string, number> = {};
   const byDay: Record<number, number> = {};
@@ -169,8 +180,11 @@ Analyze this weekly financial data for user "${page.title}":
 
 Total spent this week: ${formatCurrency(page.pageTotal, settings.currency)}
 Monthly budget: ${formatCurrency(settings.monthlyBudget, settings.currency)}
-Weekly budget target (monthly ÷ 4): ${formatCurrency(weeklyBudget, settings.currency)}
-Status: ${page.pageTotal > weeklyBudget ? "OVER weekly budget" : "Within weekly budget"}
+Fixed monthly expenses: ${formatCurrency(fixedTotal, settings.currency)}
+Available monthly budget (after fixed): ${formatCurrency(settings.monthlyBudget - fixedTotal, settings.currency)}
+Weekly budget target: ${formatCurrency(weeklyBudget, settings.currency)}
+Status: ${weeklyBudget > 0 && page.pageTotal > weeklyBudget ? "OVER weekly budget" : "Within weekly budget"}
+${settings.fixedExpenses.length > 0 ? `\nFixed expenses:\n${settings.fixedExpenses.map((e) => `- ${e.title}: ${formatCurrency(e.amount, settings.currency)}`).join("\n")}` : ""}
 
 Spending by day (dayIndex 1=Mon … 7=Sun):
 ${page.days
@@ -198,9 +212,19 @@ Provide actionable weekly analysis with budget warnings if over target.
   try {
     ai = isCohereConfigured()
       ? await generateFinancialInsight(prompt)
-      : buildFallbackWeekly(page, settings.currency, settings.monthlyBudget);
+      : buildFallbackWeekly(
+          page,
+          settings.currency,
+          settings.monthlyBudget,
+          settings.fixedExpenses
+        );
   } catch {
-    ai = buildFallbackWeekly(page, settings.currency, settings.monthlyBudget);
+    ai = buildFallbackWeekly(
+      page,
+      settings.currency,
+      settings.monthlyBudget,
+      settings.fixedExpenses
+    );
   }
 
   return persistSummary(userId, scopeKey, {
@@ -227,7 +251,9 @@ export async function generateDailySummary(
   const settings = await getOrCreateSettings(userId);
   const date = todayDateString();
   const scopeKey = `daily:${date}:${pageId}:${dayIndex}`;
-  const dailyBudget = settings.monthlyBudget > 0 ? settings.monthlyBudget / 30 : 0;
+  const availableMonthly =
+    settings.monthlyBudget - sumFixedExpenses(settings.fixedExpenses);
+  const dailyBudget = availableMonthly > 0 ? availableMonthly / 30 : 0;
 
   const getDayData = (idx: number) => {
     const day = page.days.find((d) => d.dayIndex === idx);
@@ -272,8 +298,9 @@ Categories: ${JSON.stringify(prev1.cats)}
 TWO DAYS BEFORE (${prev2.label}): ${formatCurrency(prev2.total, settings.currency)}
 Categories: ${JSON.stringify(prev2.cats)}
 
-Daily budget target (monthly ÷ 30): ${formatCurrency(dailyBudget, settings.currency)}
+Daily budget target: ${formatCurrency(dailyBudget, settings.currency)}
 Monthly budget: ${formatCurrency(settings.monthlyBudget, settings.currency)}
+Fixed expenses (monthly): ${formatCurrency(sumFixedExpenses(settings.fixedExpenses), settings.currency)}
 
 Compare trends across the 3 days, category changes, and budget status. Be concise and actionable.
 `;
@@ -318,9 +345,10 @@ export async function generateWeeklyAnalysisForEmail(
   userId: string,
   page: TrackerPageDto,
   currency: string,
-  monthlyBudget: number
+  monthlyBudget: number,
+  fixedExpenses: Array<{ title: string; amount: number }> = []
 ): Promise<string> {
-  const weeklyBudget = monthlyBudget / 4;
+  const weeklyBudget = getWeeklyBudget(monthlyBudget, fixedExpenses);
   const prompt = `
 Weekly spending report:
 Total: ${formatCurrency(page.pageTotal, currency)}

@@ -5,8 +5,12 @@ import { getApiErrorMessage } from "@/services/api";
 import type { EntryFormData } from "@/types/tracker";
 import { downloadBlob } from "@/lib/trackerUtils";
 
-const PAGE_KEY = ["tracker", "page"] as const;
+const PAGES_KEY = ["tracker", "pages"] as const;
 const SETTINGS_KEY = ["tracker", "settings"] as const;
+
+export function pageQueryKey(pageId: string) {
+  return ["tracker", "page", pageId] as const;
+}
 
 export function useTrackerSettings() {
   return useQuery({
@@ -15,10 +19,46 @@ export function useTrackerSettings() {
   });
 }
 
-export function useTrackerPage() {
+export function useTrackerPages() {
   return useQuery({
-    queryKey: PAGE_KEY,
-    queryFn: trackerApi.getDefaultPage,
+    queryKey: PAGES_KEY,
+    queryFn: trackerApi.listPages,
+  });
+}
+
+export function useTrackerPage(pageId: string | null) {
+  return useQuery({
+    queryKey: pageId ? pageQueryKey(pageId) : ["tracker", "page", "none"],
+    queryFn: () => trackerApi.getPage(pageId!),
+    enabled: Boolean(pageId),
+  });
+}
+
+export function useCreatePage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => trackerApi.createPage(),
+    onSuccess: (page) => {
+      queryClient.setQueryData(pageQueryKey(page.id), page);
+      void queryClient.invalidateQueries({ queryKey: PAGES_KEY });
+      toast.success("Page created");
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
+  });
+}
+
+export function useDeletePage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (pageId: string) => trackerApi.deletePage(pageId),
+    onSuccess: (_data, pageId) => {
+      queryClient.removeQueries({ queryKey: pageQueryKey(pageId) });
+      void queryClient.invalidateQueries({ queryKey: PAGES_KEY });
+      toast.success("Page deleted");
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
   });
 }
 
@@ -29,7 +69,8 @@ export function useUpdatePageTitle() {
     mutationFn: ({ pageId, title }: { pageId: string; title: string }) =>
       trackerApi.updatePage(pageId, { title }),
     onSuccess: (page) => {
-      queryClient.setQueryData(PAGE_KEY, page);
+      queryClient.setQueryData(pageQueryKey(page.id), page);
+      void queryClient.invalidateQueries({ queryKey: PAGES_KEY });
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -54,7 +95,8 @@ export function useSaveEntry() {
         ? trackerApi.updateEntry(pageId, dayIndex, entryId, form)
         : trackerApi.createEntry(pageId, dayIndex, form),
     onSuccess: (page) => {
-      queryClient.setQueryData(PAGE_KEY, page);
+      queryClient.setQueryData(pageQueryKey(page.id), page);
+      void queryClient.invalidateQueries({ queryKey: PAGES_KEY });
       toast.success("Entry saved");
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
@@ -75,7 +117,8 @@ export function useDeleteEntry() {
       entryId: string;
     }) => trackerApi.deleteEntry(pageId, dayIndex, entryId),
     onSuccess: (page) => {
-      queryClient.setQueryData(PAGE_KEY, page);
+      queryClient.setQueryData(pageQueryKey(page.id), page);
+      void queryClient.invalidateQueries({ queryKey: PAGES_KEY });
       toast.success("Entry deleted");
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),

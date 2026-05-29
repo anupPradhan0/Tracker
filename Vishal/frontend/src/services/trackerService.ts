@@ -21,9 +21,28 @@ export const trackerApi = {
     return unwrap(data);
   },
 
+  async listPages(): Promise<TrackerPage[]> {
+    const { data } = await api.get<ApiSuccess<TrackerPage[]>>("/api/tracker/pages");
+    return unwrap(data);
+  },
+
+  async getPage(pageId: string): Promise<TrackerPage> {
+    const { data } = await api.get<ApiSuccess<TrackerPage>>(`/api/tracker/pages/${pageId}`);
+    return unwrap(data);
+  },
+
   async getDefaultPage(): Promise<TrackerPage> {
     const { data } = await api.get<ApiSuccess<TrackerPage>>("/api/tracker/pages/default");
     return unwrap(data);
+  },
+
+  async createPage(payload?: { title?: string; icon?: string }): Promise<TrackerPage> {
+    const { data } = await api.post<ApiSuccess<TrackerPage>>("/api/tracker/pages", payload ?? {});
+    return unwrap(data);
+  },
+
+  async deletePage(pageId: string): Promise<void> {
+    await api.delete(`/api/tracker/pages/${pageId}`);
   },
 
   async updatePage(

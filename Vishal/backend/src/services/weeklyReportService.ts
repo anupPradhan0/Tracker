@@ -1,5 +1,9 @@
 import { prisma } from "../lib/prisma.js";
-import { calculatePageTotal } from "../utils/tracker.js";
+import {
+  calculatePageTotal,
+  getWeeklyBudget,
+  parseFixedExpenses,
+} from "../utils/tracker.js";
 import type { TrackerPageDto } from "../types/tracker.js";
 import type { WeeklyEmailData } from "./emailService.js";
 
@@ -131,12 +135,14 @@ export async function buildWeeklyEmailData(
   const settings = user.settings ?? {
     currency: "₹",
     monthlyBudget: 0,
+    fixedExpenses: [] as unknown,
     weeklyReportsEnabled: false,
   };
+  const fixedExpenses = parseFixedExpenses(settings.fixedExpenses);
 
   const page = mapPageFromDb(pageRecord);
-  const weeklyBudget = settings.monthlyBudget / 4;
-  const difference = page.pageTotal - weeklyBudget;
+  const weeklyBudget = getWeeklyBudget(settings.monthlyBudget, fixedExpenses);
+  const difference = weeklyBudget > 0 ? page.pageTotal - weeklyBudget : 0;
 
   const data: WeeklyEmailData = {
     userName: user.name,
@@ -145,7 +151,7 @@ export async function buildWeeklyEmailData(
     weeklyBudget,
     weekTotal: page.pageTotal,
     difference,
-    isOverBudget: difference > 0,
+    isOverBudget: weeklyBudget > 0 && difference > 0,
     pageTitle: page.title,
     analysis: await (async () => {
       const { generateWeeklyAnalysisForEmail } = await import("./aiSummaryService.js");
@@ -153,7 +159,8 @@ export async function buildWeeklyEmailData(
         userId,
         page,
         settings.currency,
-        settings.monthlyBudget
+        settings.monthlyBudget,
+        fixedExpenses
       );
     })(),
   };

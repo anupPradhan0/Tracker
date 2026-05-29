@@ -236,6 +236,6 @@ Email reports and weekly cron use Cohere for analysis when the key is valid; oth
 
 - Standardized **dayIndex 1–7** (Mon–Sun) in API and UI labels.
 - Relational PostgreSQL schema instead of MongoDB embedded documents.
-- Weekly budget = `monthlyBudget / 4` (simplified vs Anup’s fixed-expenses model).
+- Weekly budget = `(monthlyBudget − sum(fixedExpenses)) / 4` (ported from Anup’s budget model).
 - Email includes **PDF attachment** (Anup reference did not attach PDFs).
 - Route ordering: `/pages/default` registered before `/pages/:id`.

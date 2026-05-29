@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/ApiError.js";
-import { calculatePageTotal } from "../utils/tracker.js";
+import { calculatePageTotal, parseFixedExpenses } from "../utils/tracker.js";
 import type {
   TrackerDayDto,
   TrackerEntryDto,
@@ -99,6 +99,7 @@ export async function getOrCreateSettings(userId: string): Promise<TrackerSettin
   return {
     currency: settings.currency,
     monthlyBudget: settings.monthlyBudget,
+    fixedExpenses: parseFixedExpenses(settings.fixedExpenses),
     weeklyReportsEnabled: settings.weeklyReportsEnabled,
   };
 }
@@ -116,6 +117,7 @@ export async function updateSettings(
   return {
     currency: settings.currency,
     monthlyBudget: settings.monthlyBudget,
+    fixedExpenses: parseFixedExpenses(settings.fixedExpenses),
     weeklyReportsEnabled: settings.weeklyReportsEnabled,
   };
 }

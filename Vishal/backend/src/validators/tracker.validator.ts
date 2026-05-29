@@ -20,9 +20,15 @@ export const createEntrySchema = z.object({
 
 export const updateEntrySchema = createEntrySchema.partial();
 
+const fixedExpenseSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  amount: z.coerce.number().min(0),
+});
+
 export const updateSettingsSchema = z.object({
   currency: z.string().trim().min(1).max(5).optional(),
   monthlyBudget: z.coerce.number().min(0).optional(),
+  fixedExpenses: z.array(fixedExpenseSchema).max(50).optional(),
   weeklyReportsEnabled: z.boolean().optional(),
 });
 

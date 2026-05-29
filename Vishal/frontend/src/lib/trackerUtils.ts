@@ -1,4 +1,4 @@
-import type { TrackerDay } from "@/types/tracker";
+import type { FixedExpense, TrackerDay } from "@/types/tracker";
 
 export const DAY_LABELS = [
   "Day 1 (Mon)",
@@ -25,11 +25,39 @@ export function calculateDayTotal(day: TrackerDay): number {
   return day.entries.reduce((sum, e) => sum + e.amount, 0);
 }
 
+export function sumFixedExpenses(fixedExpenses: FixedExpense[] = []): number {
+  return fixedExpenses.reduce((sum, item) => sum + item.amount, 0);
+}
+
+export function getRealMonthlyBudget(
+  monthlyBudget: number,
+  fixedExpenses: FixedExpense[] = []
+): number {
+  return Math.max(0, monthlyBudget - sumFixedExpenses(fixedExpenses));
+}
+
+export function getWeeklyBudget(
+  monthlyBudget: number,
+  fixedExpenses: FixedExpense[] = []
+): number {
+  const realMonthly = getRealMonthlyBudget(monthlyBudget, fixedExpenses);
+  return realMonthly > 0 ? realMonthly / 4 : 0;
+}
+
 export function getBudgetStatus(
   pageTotal: number,
-  monthlyBudget: number
-): { weeklyBudget: number; isOverBudget: boolean; label: string } {
-  const weeklyBudget = monthlyBudget > 0 ? monthlyBudget / 4 : 0;
+  monthlyBudget: number,
+  fixedExpenses: FixedExpense[] = []
+): {
+  weeklyBudget: number;
+  fixedExpensesTotal: number;
+  availableMonthly: number;
+  isOverBudget: boolean;
+  label: string;
+} {
+  const fixedExpensesTotal = sumFixedExpenses(fixedExpenses);
+  const availableMonthly = getRealMonthlyBudget(monthlyBudget, fixedExpenses);
+  const weeklyBudget = getWeeklyBudget(monthlyBudget, fixedExpenses);
   const isOverBudget = weeklyBudget > 0 && pageTotal > weeklyBudget;
   const label =
     monthlyBudget <= 0
@@ -38,7 +66,7 @@ export function getBudgetStatus(
         ? "Over budget"
         : "On track";
 
-  return { weeklyBudget, isOverBudget, label };
+  return { weeklyBudget, fixedExpensesTotal, availableMonthly, isOverBudget, label };
 }
 
 export const ENTRY_CATEGORIES = [

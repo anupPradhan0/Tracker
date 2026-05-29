@@ -26,8 +26,14 @@ export interface TrackerPageDto {
   updatedAt: string;
 }
 
+export interface FixedExpenseDto {
+  title: string;
+  amount: number;
+}
+
 export interface TrackerSettingsDto {
   currency: string;
   monthlyBudget: number;
+  fixedExpenses: FixedExpenseDto[];
   weeklyReportsEnabled: boolean;
 }
