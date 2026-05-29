@@ -1,0 +1,23 @@
+# Secrets — never commit real credentials
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+
+# Dependencies & build output
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Logs & OS
+*.log
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Test coverage
+coverage/

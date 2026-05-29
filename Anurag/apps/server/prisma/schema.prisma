@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AiProvider {
+  gemini
+  openai
+  cohere
+}
+
+enum SummaryPeriod {
+  WEEKLY
+  MONTHLY
+}
+
+enum EmailLogStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum EmailLogType {
+  AI_SUMMARY
+}
+
+model User {
+  id                  String       @id @default(uuid())
+  email               String       @unique
+  passwordHash        String
+  name                String
+  role                UserRole     @default(USER)
+  currency            String       @default("INR")
+  preferredAiProvider AiProvider   @default(gemini)
+  reportSenderEmail   String?
+  reportReceiverEmail String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  aiKeys      UserAiKey[]
+  categories  Category[]
+  expenses    Expense[]
+  budgets     Budget[]
+  aiSummaries AiSummary[]
+  emailLogs   EmailLog[]
+
+  @@map("users")
+}
+
+model UserAiKey {
+  id            String     @id @default(uuid())
+  userId        String
+  provider      AiProvider
+  encryptedKey  String
+  keyHint       String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("user_ai_keys")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  icon      String?
+  color     String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("categories")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  userId      String
+  categoryId  String
+  amount      Decimal  @db.Decimal(12, 2)
+  description String?
+  date        DateTime
+  currency    String   @default("INR")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([userId, date])
+  @@index([userId, categoryId])
+  @@map("expenses")
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  userId    String
+  year      Int
+  month     Int
+  amount    Decimal  @db.Decimal(12, 2)
+  currency  String   @default("INR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year, month])
+  @@index([userId, year, month])
+  @@map("budgets")
+}
+
+model AiSummary {
+  id          String        @id @default(uuid())
+  userId      String
+  period      SummaryPeriod
+  periodStart DateTime
+  periodEnd   DateTime
+  provider    AiProvider
+  content     Json
+  createdAt   DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, period, periodStart])
+  @@map("ai_summaries")
+}
+
+model EmailLog {
+  id        String         @id @default(uuid())
+  userId    String
+  type      EmailLogType
+  status    EmailLogStatus @default(PENDING)
+  recipient String
+  error     String?
+  metadata  Json?
+  sentAt    DateTime?
+  createdAt DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("email_logs")
+}

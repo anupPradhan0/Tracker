@@ -1,0 +1,58 @@
+# Local development stack
+#
+# Postgres only (default):  docker compose up -d
+# Postgres + API:           docker compose --profile app up -d --build
+#
+# Run web on host:          pnpm dev  (uses MAIL_*, COHERE_MODEL, GEMINI_MODEL from .env)
+# API in Docker uses .env via env_file; DATABASE_URL is overridden to reach postgres service.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: anurag-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-anurag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-anurag_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-expense_tracker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-anurag} -d ${POSTGRES_DB:-expense_tracker}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - anurag
+
+  api:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: anurag-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-4000}:4000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-anurag}:${POSTGRES_PASSWORD:-anurag_dev}@postgres:5432/${POSTGRES_DB:-expense_tracker}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - anurag
+
+networks:
+  anurag:
+    name: anurag-network
+
+volumes:
+  postgres_data:
