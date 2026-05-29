@@ -1,7 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-surface: oklch(99% 0.005 270);
+  --color-surface-glass: oklch(100% 0 0 / 0.72);
+  --color-primary: oklch(52% 0.22 275);
+  --color-primary-glow: oklch(65% 0.18 275 / 0.35);
+  --color-accent: oklch(72% 0.14 200);
+  --shadow-3d-sm: 0 1px 2px oklch(0% 0 0 / 0.04), 0 4px 12px oklch(52% 0.22 275 / 0.08);
+  --shadow-3d-md: 0 2px 4px oklch(0% 0 0 / 0.04), 0 8px 24px oklch(52% 0.22 275 / 0.12),
+    0 0 0 1px oklch(100% 0 0 / 0.6) inset;
+  --shadow-3d-lg: 0 4px 8px oklch(0% 0 0 / 0.06), 0 16px 48px oklch(52% 0.22 275 / 0.15);
 }
 
 body {
@@ -11,6 +20,133 @@ body {
   overflow-x: hidden;
 }
 
+:root {
+  color-scheme: light;
+}
+
+/* ── Background mesh ── */
+@keyframes mesh-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.bg-mesh {
+  background-color: oklch(98% 0.008 270);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 10% 20%, oklch(88% 0.08 275 / 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 80%, oklch(90% 0.06 200 / 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, oklch(92% 0.04 300 / 0.25) 0%, transparent 50%),
+    linear-gradient(135deg, oklch(97% 0.01 270) 0%, oklch(96% 0.02 275) 50%, oklch(98% 0.01 200) 100%);
+  background-size: 200% 200%;
+  animation: mesh-shift 18s ease-in-out infinite;
+}
+
+/* ── Glass & 3D surfaces ── */
+.glass-panel {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid oklch(100% 0 0 / 0.55);
+  box-shadow: var(--shadow-3d-md);
+}
+
+.card-3d {
+  box-shadow: var(--shadow-3d-sm);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+@media (min-width: 640px) {
+  .card-3d:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3d-lg);
+  }
+}
+
+.btn-3d {
+  box-shadow:
+    0 2px 4px oklch(0% 0 0 / 0.08),
+    0 4px 12px oklch(52% 0.22 275 / 0.25);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-3d:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 2px oklch(0% 0 0 / 0.06),
+    0 2px 6px oklch(52% 0.22 275 / 0.15);
+}
+
+/* ── Floating orbs ── */
+.float-orb {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+}
+
+.float-orb-indigo {
+  background: oklch(72% 0.16 275 / 0.35);
+}
+
+.float-orb-cyan {
+  background: oklch(78% 0.12 200 / 0.3);
+}
+
+.float-orb-violet {
+  background: oklch(70% 0.14 300 / 0.28);
+}
+
+/* ── Gradient text ── */
+.text-gradient-primary {
+  background: linear-gradient(135deg, oklch(48% 0.24 275) 0%, oklch(55% 0.22 300) 50%, oklch(62% 0.16 200) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Icon badge ── */
+.icon-badge-3d {
+  background: linear-gradient(135deg, oklch(52% 0.24 275) 0%, oklch(48% 0.22 300) 100%);
+  box-shadow:
+    0 4px 12px oklch(52% 0.22 275 / 0.35),
+    0 0 0 1px oklch(100% 0 0 / 0.2) inset;
+  transition: transform 0.25s ease;
+}
+
+.group:hover .icon-badge-3d,
+.icon-badge-3d:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+/* ── Inset chip ── */
+.chip-inset {
+  background: oklch(97% 0.01 270 / 0.85);
+  box-shadow:
+    0 1px 2px oklch(0% 0 0 / 0.04) inset,
+    0 0 0 1px oklch(90% 0.02 270 / 0.5);
+}
+
+/* ── Pill 3D ── */
+.pill-3d {
+  box-shadow: var(--shadow-3d-sm);
+}
+
+.pill-3d-active {
+  background: linear-gradient(135deg, oklch(95% 0.04 275) 0%, oklch(93% 0.06 280) 100%);
+  box-shadow: var(--shadow-3d-sm);
+  border: 1px solid oklch(80% 0.08 275 / 0.4);
+}
+
+/* ── Animations ── */
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -26,10 +162,58 @@ body {
   animation: fade-in 0.4s ease-out forwards;
 }
 
-:root {
-  color-scheme: light;
+.stagger-1 {
+  animation-delay: 0.05s;
+  opacity: 0;
+}
+.stagger-2 {
+  animation-delay: 0.1s;
+  opacity: 0;
+}
+.stagger-3 {
+  animation-delay: 0.15s;
+  opacity: 0;
+}
+.stagger-4 {
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+.stagger-5 {
+  animation-delay: 0.25s;
+  opacity: 0;
+}
+.stagger-6 {
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+.stagger-7 {
+  animation-delay: 0.35s;
+  opacity: 0;
 }
 
+@keyframes chevron-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(90deg);
+  }
+}
+
+.chevron-expanded {
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.chevron-collapsed {
+  transition: transform 0.2s ease;
+}
+
+.panel-glow-left {
+  box-shadow: -8px 0 32px oklch(52% 0.22 275 / 0.12);
+}
+
+/* ── Safe area & touch ── */
 .pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
 }
@@ -46,4 +230,39 @@ body {
 .touch-target {
   min-height: 2.75rem;
   min-width: 2.75rem;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .bg-mesh {
+    animation: none;
+  }
+
+  .card-3d,
+  .card-3d:hover {
+    transform: none;
+    transition: none;
+  }
+
+  .btn-3d:active {
+    transform: none;
+  }
+
+  .icon-badge-3d,
+  .group:hover .icon-badge-3d,
+  .icon-badge-3d:hover {
+    transform: none;
+  }
+
+  .animate-fade-in,
+  .stagger-1,
+  .stagger-2,
+  .stagger-3,
+  .stagger-4,
+  .stagger-5,
+  .stagger-6,
+  .stagger-7 {
+    animation: none;
+    opacity: 1;
+  }
 }

@@ -47,17 +47,18 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
     <div className="fixed inset-0 z-50">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
         aria-label="Close AI panel"
         onClick={onClose}
       />
       <aside
         className={cn(
-          "absolute right-0 top-0 flex h-full w-full flex-col bg-white pt-safe pb-safe shadow-2xl",
-          "animate-fade-in md:max-w-md"
+          "glass-panel panel-glow-left absolute right-0 top-0 flex h-full w-full flex-col pt-safe pb-safe",
+          "animate-fade-in md:max-w-md",
+          "border-l border-white/60"
         )}
       >
-        <div className="flex items-center justify-between border-b border-slate-100 p-4">
+        <div className="flex items-center justify-between border-b border-indigo-100/60 p-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-indigo-500" />
             <h2 className="text-lg font-bold text-slate-900">AI Assistant</h2>
@@ -67,7 +68,7 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
           </Button>
         </div>
 
-        <div className="border-b border-slate-100 px-4 py-3">
+        <div className="border-b border-indigo-100/60 px-4 py-3">
           <p className="text-xs text-slate-500">
             Powered by{" "}
             <span className="font-medium text-indigo-600">Cohere</span>
@@ -83,17 +84,17 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
           </p>
         </div>
 
-        <div className="flex gap-1 border-b border-slate-100 p-2">
+        <div className="flex gap-1 border-b border-indigo-100/60 p-2">
           {(["daily", "weekly"] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
               className={cn(
-                "flex-1 rounded-lg py-2 text-sm font-medium capitalize transition-colors",
+                "flex-1 rounded-xl py-2 text-sm font-medium capitalize transition-all duration-200",
                 tab === t
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "btn-3d bg-gradient-to-br from-indigo-600 to-violet-600 text-white"
+                  : "text-slate-600 hover:bg-indigo-50/60"
               )}
             >
               {t}
@@ -145,7 +146,7 @@ export function AiAssistantPanel({ open, onClose, pageId, currency }: AiAssistan
                 <select
                   value={selectedDay}
                   onChange={(e) => setSelectedDay(Number(e.target.value))}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-indigo-100/80 bg-white/90 px-3 py-2 text-sm shadow-[0_1px_2px_oklch(0%_0_0/0.04)_inset] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                 >
                   {[1, 2, 3, 4, 5, 6, 7].map((d) => (
                     <option key={d} value={d}>
@@ -202,7 +203,7 @@ function SummaryCard({ summary, currency }: { summary: AISummary; currency: stri
     summary.dayIndex != null ? ` · ${getDayLabel(summary.dayIndex)}` : "";
 
   return (
-    <Card className="border-slate-200/80">
+    <Card className="border-indigo-100/60">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
@@ -213,7 +214,7 @@ function SummaryCard({ summary, currency }: { summary: AISummary; currency: stri
         </div>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <div className="flex items-center justify-between rounded-lg bg-indigo-50/80 px-3 py-2">
+        <div className="chip-inset flex items-center justify-between rounded-xl px-3 py-2">
           <span className="text-slate-600">Total spent</span>
           <span className="font-semibold">{formatCurrency(summary.totalSpent, currency)}</span>
         </div>

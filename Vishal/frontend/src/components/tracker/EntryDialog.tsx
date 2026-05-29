@@ -114,12 +114,12 @@ export function EntryDialog({
               autoComplete="off"
             />
             {showCategories && filteredCategories.length > 0 && (
-              <ul className="absolute z-20 mt-1 max-h-40 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+              <ul className="glass-panel absolute z-20 mt-1 max-h-40 w-full overflow-auto rounded-xl py-1 shadow-[var(--shadow-3d-md)]">
                 {filteredCategories.map((cat) => (
                   <li key={cat}>
                     <button
                       type="button"
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-indigo-50"
+                      className="w-full px-3 py-2 text-left text-sm transition-colors hover:bg-indigo-50/80"
                       onMouseDown={(e) => {
                         e.preventDefault();
                         setForm({ ...form, category: cat });
@@ -151,10 +151,10 @@ export function EntryDialog({
                     key={tag}
                     type="button"
                     className={cn(
-                      "rounded-full border px-3 py-1 text-xs transition-colors",
+                      "pill-3d rounded-full border px-3 py-1 text-xs transition-all duration-200",
                       active
-                        ? "border-indigo-600 bg-indigo-600 text-white"
-                        : "border-slate-200 text-slate-600 hover:border-indigo-300"
+                        ? "border-indigo-600 bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-[var(--shadow-3d-sm)]"
+                        : "border-indigo-100/80 bg-white/80 text-slate-600 hover:border-indigo-300 hover:-translate-y-0.5"
                     )}
                     onClick={() => {
                       const next = active

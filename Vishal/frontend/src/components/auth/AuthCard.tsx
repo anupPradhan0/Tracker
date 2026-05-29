@@ -17,16 +17,20 @@ interface AuthCardProps {
 
 export function AuthCard({ title, description, children, footer }: AuthCardProps) {
   return (
-    <Card className="animate-fade-in w-full max-w-md border-white/40 bg-white/80 shadow-xl shadow-blue-100/50 backdrop-blur-md">
+    <Card className="animate-fade-in w-full max-w-md">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-200">
+        <div className="icon-badge-3d mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl text-white">
           <Wallet className="h-7 w-7" />
         </div>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>
-      {footer && <div className="border-t border-blue-50 px-6 pb-6 pt-2 text-center text-sm">{footer}</div>}
+      {footer && (
+        <div className="border-t border-indigo-100/60 px-6 pb-6 pt-2 text-center text-sm">
+          {footer}
+        </div>
+      )}
     </Card>
   );
 }

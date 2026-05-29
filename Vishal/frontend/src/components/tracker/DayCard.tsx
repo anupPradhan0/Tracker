@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { calculateDayTotal, formatCurrency, getDayLabel } from "@/lib/trackerUtils";
@@ -13,6 +13,7 @@ interface DayCardProps {
   onEdit: (entry: TrackerEntry) => void;
   onDelete: (entryId: string) => void;
   isDeleting?: boolean;
+  className?: string;
 }
 
 export function DayCard({
@@ -24,6 +25,7 @@ export function DayCard({
   onEdit,
   onDelete,
   isDeleting,
+  className,
 }: DayCardProps) {
   const dayTotal = calculateDayTotal(day);
   const entryCount = day.entries.length;
@@ -31,8 +33,9 @@ export function DayCard({
   return (
     <article
       className={cn(
-        "group flex flex-col rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm transition-all duration-200",
-        "hover:border-indigo-200 hover:shadow-md"
+        "card-3d glass-panel group flex flex-col rounded-2xl transition-all duration-200",
+        "hover:border-indigo-200/60",
+        className
       )}
     >
       <header
@@ -43,11 +46,12 @@ export function DayCard({
         onKeyDown={(e) => e.key === "Enter" && onToggle()}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          {expanded ? (
-            <ChevronDown className="h-4 w-4 shrink-0 text-indigo-500" />
-          ) : (
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-          )}
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 shrink-0 text-indigo-500",
+              expanded ? "chevron-expanded" : "chevron-collapsed text-slate-400"
+            )}
+          />
           <div className="min-w-0">
             <h3 className="truncate font-semibold text-slate-900">
               {getDayLabel(day.dayIndex)}
@@ -79,7 +83,7 @@ export function DayCard({
       </header>
 
       {expanded && (
-        <div className="border-t border-slate-100 px-3 pb-3 pt-1">
+        <div className="border-t border-indigo-100/60 px-3 pb-3 pt-1">
           {day.entries.length === 0 ? (
             <p className="py-6 text-center text-sm text-slate-400">No entries yet</p>
           ) : (
@@ -87,7 +91,7 @@ export function DayCard({
               {day.entries.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex flex-col gap-2 rounded-xl bg-slate-50/80 px-3 py-2.5 transition-colors hover:bg-indigo-50/50 sm:flex-row sm:items-start sm:justify-between"
+                  className="chip-inset flex flex-col gap-2 rounded-xl px-3 py-2.5 transition-colors hover:bg-indigo-50/50 sm:flex-row sm:items-start sm:justify-between"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -95,7 +99,7 @@ export function DayCard({
                         {entry.title}
                       </span>
                       {entry.category && (
-                        <span className="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">
+                        <span className="pill-3d shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700">
                           {entry.category}
                         </span>
                       )}

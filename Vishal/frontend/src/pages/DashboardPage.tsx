@@ -30,6 +30,16 @@ import { formatCurrency, getBudgetStatus, getDayLabel } from "@/lib/trackerUtils
 import type { EntryFormData, TrackerEntry } from "@/types/tracker";
 import { cn } from "@/lib/utils";
 
+const dayStaggerClasses = [
+  "stagger-1",
+  "stagger-2",
+  "stagger-3",
+  "stagger-4",
+  "stagger-5",
+  "stagger-6",
+  "stagger-7",
+] as const;
+
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const { data: folders = [], isLoading: foldersLoading, refetch: refetchFolders } =
@@ -141,7 +151,7 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50/30 to-white">
+      <div className="bg-mesh flex min-h-screen items-center justify-center">
         <Spinner className="h-8 w-8 text-indigo-600" />
       </div>
     );
@@ -149,7 +159,7 @@ export function DashboardPage() {
 
   if (isError || !page) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 p-6">
+      <div className="bg-mesh flex min-h-screen flex-col items-center justify-center gap-4 p-6">
         <p className="text-slate-600">Could not load your tracker.</p>
         <Button
           onClick={() => {
@@ -172,11 +182,16 @@ export function DashboardPage() {
   const editingDayLabel = editing != null ? getDayLabel(editing.dayIndex) : "";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/40 to-violet-50/30">
-      <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-md">
+    <div className="bg-mesh relative min-h-screen overflow-hidden">
+      <div className="float-orb float-orb-indigo pointer-events-none absolute -left-32 top-0 h-96 w-96" />
+      <div className="float-orb float-orb-violet pointer-events-none absolute -right-24 bottom-0 h-80 w-80" />
+
+      <header className="glass-panel sticky top-0 z-40 border-b border-white/60 shadow-[var(--shadow-3d-sm)]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
           <div className="flex min-w-0 items-center gap-2 font-semibold text-indigo-700">
-            <Wallet className="h-5 w-5 shrink-0" />
+            <div className="icon-badge-3d flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white">
+              <Wallet className="h-4 w-4" />
+            </div>
             <span className="truncate text-sm sm:text-base">Finance Tracker</span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -209,7 +224,7 @@ export function DashboardPage() {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-7xl flex-col md:flex-row">
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col md:flex-row">
         <FolderSidebar
           folders={folders}
           pages={pages}
@@ -267,9 +282,7 @@ export function DashboardPage() {
         <main className="min-w-0 flex-1 px-3 py-4 pb-safe sm:px-6 sm:py-8">
           <section
             className={cn(
-              "mb-6 rounded-2xl border p-4 shadow-lg transition-shadow sm:mb-8 sm:p-6",
-              "border-indigo-100/80 bg-white/90",
-              "hover:shadow-xl"
+              "card-3d glass-panel mb-6 rounded-2xl p-4 sm:mb-8 sm:p-6"
             )}
           >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -298,10 +311,10 @@ export function DashboardPage() {
                   </span>
                   <span
                     className={cn(
-                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                      "pill-3d rounded-full px-2.5 py-0.5 text-xs font-medium",
                       budgetStatus.isOverBudget
-                        ? "bg-red-100 text-red-700"
-                        : "bg-emerald-100 text-emerald-700"
+                        ? "bg-red-100 text-red-700 shadow-[0_1px_2px_oklch(0%_0_0/0.06)_inset]"
+                        : "bg-emerald-100 text-emerald-700 shadow-[0_1px_2px_oklch(0%_0_0/0.06)_inset]"
                     )}
                   >
                     Status: {budgetStatus.label}
@@ -341,28 +354,28 @@ export function DashboardPage() {
             </div>
 
             {(settings?.monthlyBudget ?? 0) > 0 && (
-              <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
-                <div>
+              <div className="mt-4 grid grid-cols-1 gap-3 border-t border-indigo-100/60 pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                <div className="chip-inset rounded-xl p-3">
                   <p className="text-slate-500">Monthly budget</p>
                   <p className="font-semibold">
                     {formatCurrency(settings!.monthlyBudget, currency)}
                   </p>
                 </div>
                 {budgetStatus.fixedExpensesTotal > 0 && (
-                  <div>
+                  <div className="chip-inset rounded-xl p-3">
                     <p className="text-slate-500">Fixed expenses</p>
                     <p className="font-semibold">
                       {formatCurrency(budgetStatus.fixedExpensesTotal, currency)}
                     </p>
                   </div>
                 )}
-                <div>
+                <div className="chip-inset rounded-xl p-3">
                   <p className="text-slate-500">Weekly target</p>
                   <p className="font-semibold">
                     {formatCurrency(budgetStatus.weeklyBudget, currency)}
                   </p>
                 </div>
-                <div>
+                <div className="chip-inset rounded-xl p-3">
                   <p className="text-slate-500">Entries this week</p>
                   <p className="font-semibold">
                     {page.days.reduce((n, d) => n + d.entries.length, 0)}
@@ -377,9 +390,10 @@ export function DashboardPage() {
           </p>
 
           <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
-            {page.days.map((day) => (
+            {page.days.map((day, index) => (
               <DayCard
                 key={day.id}
+                className={cn("animate-fade-in", dayStaggerClasses[index])}
                 day={day}
                 currency={currency}
                 expanded={expandedDays[day.dayIndex] ?? false}

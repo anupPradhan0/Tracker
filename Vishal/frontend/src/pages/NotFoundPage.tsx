@@ -6,10 +6,12 @@ import { ROUTES } from "@/constants/auth";
 
 export function NotFoundPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-white p-4">
-      <Card className="w-full max-w-md animate-fade-in border-white/40 bg-white/80 text-center shadow-xl backdrop-blur-md">
+    <div className="bg-mesh relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div className="float-orb float-orb-indigo -left-24 top-20 h-72 w-72" />
+      <div className="float-orb float-orb-cyan -right-16 bottom-10 h-80 w-80" />
+      <Card className="relative z-10 w-full max-w-md animate-fade-in text-center">
         <CardHeader>
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
+          <div className="icon-badge-3d mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-white">
             <Wallet className="h-6 w-6" />
           </div>
           <CardTitle className="text-3xl">404</CardTitle>

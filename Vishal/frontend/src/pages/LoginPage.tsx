@@ -52,7 +52,7 @@ export function LoginPage() {
           footer={
             <span className="text-slate-600">
               Don&apos;t have an account?{" "}
-              <Link to={ROUTES.register} className="font-medium text-blue-600 hover:underline">
+              <Link to={ROUTES.register} className="font-medium text-indigo-600 hover:underline">
                 Create one
               </Link>
             </span>

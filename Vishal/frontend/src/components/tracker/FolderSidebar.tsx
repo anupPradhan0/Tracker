@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  ChevronDown,
   ChevronRight,
   FolderIcon,
   FolderPlus,
@@ -68,10 +67,10 @@ function PageRow({
   return (
     <div
       className={cn(
-        "group flex min-h-10 items-center gap-1 rounded-lg border px-2 py-1.5 transition-colors",
+        "group flex min-h-10 items-center gap-1 rounded-xl px-2 py-1.5 transition-all duration-200",
         isActive
-          ? "border-indigo-200 bg-indigo-50"
-          : "border-transparent hover:border-slate-200 hover:bg-slate-50"
+          ? "pill-3d-active"
+          : "border border-transparent hover:border-indigo-100/60 hover:bg-indigo-50/40 hover:shadow-[var(--shadow-3d-sm)]"
       )}
     >
       <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
@@ -158,20 +157,21 @@ function FolderTreeItem({
   return (
     <div>
       <div
-        className="group flex items-center gap-1 rounded-lg py-1 pr-1 hover:bg-slate-50"
+        className="group flex items-center gap-1 rounded-xl py-1 pr-1 transition-colors hover:bg-indigo-50/40"
         style={{ paddingLeft: `${level * 12 + 4}px` }}
       >
         <button
           type="button"
-          className="rounded p-0.5 hover:bg-slate-100"
+          className="rounded-lg p-0.5 transition-colors hover:bg-indigo-100/60"
           onClick={() => onToggleFolderExpanded(folder.id, !folder.isExpanded)}
           aria-label={folder.isExpanded ? "Collapse folder" : "Expand folder"}
         >
-          {folder.isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-slate-500" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-slate-500" />
-          )}
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 text-slate-500",
+              folder.isExpanded ? "chevron-expanded" : "chevron-collapsed"
+            )}
+          />
         </button>
         <FolderIcon className="h-4 w-4 shrink-0 text-indigo-500" />
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">
@@ -327,9 +327,9 @@ export function FolderSidebar({
   };
 
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-indigo-100/80 bg-white/90 md:w-64 md:border-b-0 md:border-r lg:w-72">
-      <div className="border-b border-slate-100 px-3 py-3">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <aside className="glass-panel flex w-full shrink-0 flex-col border-b border-white/60 md:w-64 md:border-b-0 md:border-r lg:w-72">
+      <div className="border-b border-indigo-100/60 px-3 py-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-indigo-500/80">
           Workspace
         </p>
         <Button
