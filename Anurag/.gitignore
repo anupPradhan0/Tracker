@@ -1,0 +1,20 @@
+# Environment & secrets (commit .env.example only)
+.env
+.env.*
+!.env.example
+apps/server/.env
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Logs & OS
+*.log
+.DS_Store
+
+# Test coverage
+coverage/
