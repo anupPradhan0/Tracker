@@ -200,8 +200,6 @@ function createTransporter() {
     connectionTimeout: 20_000,
     greetingTimeout: 20_000,
     socketTimeout: 30_000,
-    // Prefer IPv4 — avoids "could not reach mail server" on some Linux/DNS setups
-    family: 4,
   });
 }
 
