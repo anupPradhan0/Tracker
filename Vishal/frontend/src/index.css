@@ -24,3 +24,9 @@ body {
 .animate-fade-in {
   animation: fade-in 0.4s ease-out forwards;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}

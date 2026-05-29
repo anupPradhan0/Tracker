@@ -13,6 +13,13 @@ const envSchema = z.object({
   COOKIE_SECRET: z.string().min(32),
   CLIENT_URL: z.string().url(),
   SERVER_URL: z.string().url().optional(),
+  MAIL_HOST: z.string().optional(),
+  MAIL_PORT: z.coerce.number().default(587),
+  MAIL_USER: z.string().optional(),
+  MAIL_PASSWORD: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
+  COHERE_API_KEY: z.string().optional(),
+  COHERE_MODEL: z.string().default("command-r-plus-08-2024"),
 });
 
 const parsed = envSchema.safeParse(process.env);

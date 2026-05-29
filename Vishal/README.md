@@ -1,6 +1,8 @@
 # Finance Tracker (Vishal)
 
-Phase 1: Authentication only — Express + PostgreSQL + Prisma backend, Vite + React frontend.
+Express + PostgreSQL + Prisma backend, Vite + React frontend — auth plus **weekly tracker dashboard** (entries, PDF export, email reports).
+
+See **[TRACKER_SETUP.md](./TRACKER_SETUP.md)** for tracker API, email, PDF, and cron setup.
 
 ## Prerequisites
 
@@ -101,6 +103,11 @@ curl -b cookies.txt http://localhost:5000/api/auth/me
 curl -X POST -b cookies.txt http://localhost:5000/api/auth/logout
 ```
 
-## Out of scope (Phase 1)
+## Tracker features
 
-Expense tracking, folders, pages, AI summaries, PDF export, and full dashboards are not included yet.
+- Weekly dashboard (Mon–Sun) with add/edit/delete entries
+- PDF export and email reports (with PDF attachment)
+- Settings: currency, monthly budget, weekly email opt-in
+- Cron: `GET /api/cron/weekly-email` (see TRACKER_SETUP.md)
+
+Not included: multi-folder sidebar, AI summaries, OAuth (email/password auth only).
