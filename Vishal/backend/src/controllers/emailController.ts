@@ -18,16 +18,16 @@ export const sendWeeklyEmail = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(401, "UNAUTHORIZED", "Authentication required");
   }
 
+  const body = req.body as { pageId?: string };
+
   if (!isEmailConfigured()) {
     throw new ApiError(
       503,
       "EMAIL_NOT_CONFIGURED",
       getEmailSetupHint() ??
-        "Email is not ready. Add your Gmail App Password to MAIL_PASSWORD in backend/.env, then restart the server."
+        "Set MAIL_HOST, MAIL_USER, and MAIL_PASSWORD in backend/.env, then restart the backend server."
     );
   }
-
-  const body = req.body as { pageId?: string };
   let pageId = body.pageId;
 
   if (!pageId) {

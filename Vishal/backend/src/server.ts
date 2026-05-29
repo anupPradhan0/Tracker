@@ -1,4 +1,3 @@
-import "./loadEnv.js";
 import app from "./app.js";
 import { env } from "./config/env.js";
 

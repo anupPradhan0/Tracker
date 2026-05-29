@@ -71,7 +71,7 @@ export function getEmailSetupHint(): string | undefined {
   const pass = normalizeMailPassword(rawPass);
 
   if (isGmailHost(host)) {
-    if (pass.length !== 16) {
+    if (pass.length < 16) {
       return (
         "Gmail needs a 16-character App Password (Google Account → Security → 2-Step Verification → App passwords). " +
         "Your normal Gmail password will not work."
