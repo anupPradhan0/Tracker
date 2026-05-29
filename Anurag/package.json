@@ -1,0 +1,17 @@
+{
+  "name": "anurag-expense-tracker",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter @anurag/web --filter @anurag/server dev",
+    "build": "pnpm run -r build",
+    "lint": "pnpm run -r lint",
+    "db:generate": "pnpm --filter @anurag/server db:generate",
+    "db:migrate": "pnpm --filter @anurag/server db:migrate",
+    "db:push": "pnpm --filter @anurag/server db:push",
+    "db:studio": "pnpm --filter @anurag/server db:studio",
+    "db:seed": "pnpm --filter @anurag/server db:seed"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
