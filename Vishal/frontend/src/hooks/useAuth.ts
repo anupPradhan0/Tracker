@@ -34,7 +34,26 @@ export function useLogin() {
       navigate(ROUTES.dashboard);
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error));
+      const msg = getApiErrorMessage(error);
+      // #region agent log
+      fetch("http://127.0.0.1:7653/ingest/7d610bca-fce8-41a2-94b5-7bfea24503fa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "342f73" },
+        body: JSON.stringify({
+          sessionId: "342f73",
+          runId: "pre-fix",
+          hypothesisId: "D",
+          location: "useAuth.ts:login",
+          message: "login error",
+          data: {
+            msg,
+            status: (error as { response?: { status?: number } }).response?.status,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+      toast.error(msg);
     },
   });
 }

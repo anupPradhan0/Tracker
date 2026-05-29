@@ -48,12 +48,18 @@ export function DashboardPage() {
     useTrackerPages();
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
 
+  // Resolve immediately when pages load — avoids one render with no page (error flash).
+  const effectivePageId =
+    selectedPageId && pages.some((p) => p.id === selectedPageId)
+      ? selectedPageId
+      : (pages[0]?.id ?? null);
+
   const {
     data: page,
     isLoading: pageLoading,
     isError,
     refetch: refetchPage,
-  } = useTrackerPage(selectedPageId);
+  } = useTrackerPage(effectivePageId);
   const { data: settings } = useTrackerSettings();
   const { data: emailStatus } = useEmailStatus();
 
@@ -93,6 +99,9 @@ export function DashboardPage() {
             onSuccess: (result) => {
               expandAllDaysPageId.current = result.page.id;
               setSelectedPageId(result.page.id);
+            },
+            onError: () => {
+              didSeedPage.current = false;
             },
           }
         );
@@ -149,6 +158,38 @@ export function DashboardPage() {
     pageLoading ||
     (pages.length === 0 && createFolder.isPending);
 
+  const wouldShowErrorWithoutPage =
+    !isLoading && (isError || !page) && pages.length > 0 && Boolean(effectivePageId);
+
+  // #region agent log
+  fetch("http://127.0.0.1:7653/ingest/7d610bca-fce8-41a2-94b5-7bfea24503fa", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "342f73" },
+    body: JSON.stringify({
+      sessionId: "342f73",
+      runId: "post-fix",
+      hypothesisId: "B",
+      location: "DashboardPage.tsx:render",
+      message: "dashboard load state",
+      data: {
+        pagesLoading,
+        foldersLoading,
+        pageLoading,
+        pagesCount: pages.length,
+        selectedPageId,
+        effectivePageId,
+        isLoading,
+        isError,
+        hasPage: Boolean(page),
+        wouldShowErrorWithoutPage,
+        createFolderPending: createFolder.isPending,
+        createFolderError: createFolder.isError,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
   if (isLoading) {
     return (
       <div className="bg-mesh flex min-h-screen items-center justify-center">
@@ -158,11 +199,21 @@ export function DashboardPage() {
   }
 
   if (isError || !page) {
+    const seedFailed = pages.length === 0 && createFolder.isError;
     return (
       <div className="bg-mesh flex min-h-screen flex-col items-center justify-center gap-4 p-6">
-        <p className="text-slate-600">Could not load your tracker.</p>
+        <p className="text-slate-600">
+          {seedFailed
+            ? "Could not create your first tracker page."
+            : "Could not load your tracker."}
+        </p>
         <Button
           onClick={() => {
+            if (seedFailed) {
+              didSeedPage.current = false;
+              createFolder.mutate({ name: "My Folder", pageTitle: "Untitled Page" });
+              return;
+            }
             void refetchFolders();
             void refetchPages();
             void refetchPage();
@@ -228,7 +279,7 @@ export function DashboardPage() {
         <FolderSidebar
           folders={folders}
           pages={pages}
-          activePageId={selectedPageId}
+          activePageId={effectivePageId}
           isCreatingFolder={createFolder.isPending}
           isRenamingFolder={updateFolderName.isPending}
           isRenamingPage={updateTitle.isPending}
