@@ -110,4 +110,4 @@ curl -X POST -b cookies.txt http://localhost:5000/api/auth/logout
 - Settings: currency, monthly budget, weekly email opt-in
 - Cron: `GET /api/cron/weekly-email` (see TRACKER_SETUP.md)
 
-Not included: multi-folder sidebar, AI summaries, OAuth (email/password auth only).
+Not included: multi-folder sidebar, OAuth (email/password auth only). AI uses **Cohere** — see TRACKER_SETUP.md.

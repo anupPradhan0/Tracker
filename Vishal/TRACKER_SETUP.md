@@ -204,6 +204,31 @@ MAIL_PASSWORD=your-app-password
 | Loading & validation | ✅ |
 | Responsive grid UI (indigo theme) | ✅ |
 | Auth | Unchanged |
+| AI assistant (Cohere) | ✅ daily + weekly summaries |
+| AI in email/cron | ✅ when `COHERE_API_KEY` set |
+
+---
+
+## AI Assistant (Cohere)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/ai/status` | `{ configured, provider: "cohere" }` |
+| GET | `/api/ai/summary/daily?limit=7` | List saved daily summaries |
+| GET | `/api/ai/summary/weekly?limit=4` | List saved weekly summaries |
+| POST | `/api/ai/summary/weekly` | Body: `{ pageId }` |
+| POST | `/api/ai/summary/daily` | Body: `{ pageId, dayIndex }` (1–7) |
+
+**Environment:**
+
+```env
+COHERE_API_KEY=your_key_from_https://dashboard.cohere.com/api-keys
+COHERE_MODEL=command-r-plus-08-2024
+```
+
+**UI:** Dashboard header → sparkles icon → AI panel with Daily / Weekly tabs.
+
+Email reports and weekly cron use Cohere for analysis when the key is valid; otherwise a static fallback is used.
 
 ---
 
