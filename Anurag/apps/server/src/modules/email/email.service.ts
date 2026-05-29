@@ -1,6 +1,5 @@
 import { prisma } from "../../infrastructure/prisma/client.js";
 import { aiService } from "../ai/ai.service.js";
-import { analyticsService } from "../analytics/analytics.service.js";
 import { mailService } from "../../infrastructure/mail/mail.service.js";
 import { buildAiSummaryEmail } from "../../infrastructure/mail/templates/ai-summary.html.js";
 import { AppError } from "../../common/errors/app-error.js";
@@ -22,8 +21,8 @@ export class EmailService {
     });
 
     try {
-      const insight = await aiService.generateSummary(userId, period);
-      const summary = await analyticsService.getSummary(userId);
+      const result = await aiService.generateSummary(userId, period);
+      const { dashboardSummary: summary, ...insight } = result;
       const periodLabel = period === "MONTHLY" ? "Monthly" : "Weekly";
       const totalSpent = period === "MONTHLY" ? summary.monthlyTotal : summary.weeklyTotal;
 

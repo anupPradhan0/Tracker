@@ -3,12 +3,8 @@ import { upsertBudgetSchema, budgetParamsSchema } from "@anurag/types";
 import { validate } from "../../common/middleware/validate.js";
 import { authenticate } from "../../common/middleware/auth.js";
 import { budgetsController } from "./budgets.controller.js";
-import { z } from "zod";
 
-const yearMonthParams = budgetParamsSchema.extend({
-  year: z.coerce.number(),
-  month: z.coerce.number(),
-});
+const yearMonthParams = budgetParamsSchema;
 
 export const budgetsRoutes = Router();
 

@@ -7,6 +7,7 @@ import { getMonthRange, getWeekRange } from "@anurag/utils";
 import { buildSpendingPrompt, SYSTEM_PROMPT } from "../../infrastructure/ai/prompt.builder.js";
 import { createAIProvider, withRetry } from "../../infrastructure/ai/provider.factory.js";
 import { AppError } from "../../common/errors/app-error.js";
+import type { AnalyticsSummary } from "@anurag/types";
 
 export class AiService {
   async generateSummary(userId: string, period: SummaryPeriod) {
@@ -63,7 +64,12 @@ export class AiService {
       },
     });
 
-    return { ...insight, id: saved.id, createdAt: saved.createdAt.toISOString() };
+    return {
+      ...insight,
+      id: saved.id,
+      createdAt: saved.createdAt.toISOString(),
+      dashboardSummary: summary as AnalyticsSummary,
+    };
   }
 
   async listSummaries(userId: string, limit = 10) {

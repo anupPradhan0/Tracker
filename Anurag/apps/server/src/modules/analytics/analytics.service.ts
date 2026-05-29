@@ -81,21 +81,24 @@ export class AnalyticsService {
 
   async getTrends(userId: string, months = 6) {
     const now = new Date();
-    const trends: { label: string; total: string }[] = [];
 
-    for (let i = months - 1; i >= 0; i--) {
+    const monthSlots = Array.from({ length: months }, (_, index) => {
+      const i = months - 1 - index;
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const year = d.getFullYear();
-      const month = d.getMonth() + 1;
-      const { start, end } = getMonthRange(year, month);
-      const total = await expensesService.sumInRange(userId, start, end);
-      trends.push({
+      return {
         label: d.toLocaleString("en-US", { month: "short", year: "2-digit" }),
-        total,
-      });
-    }
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+      };
+    });
 
-    return trends;
+    return Promise.all(
+      monthSlots.map(async ({ label, year, month }) => {
+        const { start, end } = getMonthRange(year, month);
+        const total = await expensesService.sumInRange(userId, start, end);
+        return { label, total };
+      })
+    );
   }
 
   async getByCategory(userId: string, year?: number, month?: number) {

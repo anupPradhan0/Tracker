@@ -1,5 +1,4 @@
 import { prisma } from "../../infrastructure/prisma/client.js";
-import { env } from "../../config/env.js";
 import { AppError } from "../../common/errors/app-error.js";
 import { encrypt, decrypt, getKeyHint } from "../../common/utils/crypto.js";
 import type { AiProvider } from "@prisma/client";
@@ -17,11 +16,10 @@ export class UsersService {
     const providers: AiProvider[] = ["gemini", "openai"];
     return providers.map((provider) => {
       const key = keys.find((k) => k.provider === provider);
-      const envGemini = provider === "gemini" && !!env.GEMINI_API_KEY?.trim();
       return {
         provider,
-        configured: !!key || envGemini,
-        keyHint: key?.keyHint ?? (envGemini ? "...env" : null),
+        configured: !!key,
+        keyHint: key?.keyHint ?? null,
       };
     });
   }
@@ -47,12 +45,8 @@ export class UsersService {
     });
     if (record) return decrypt(record.encryptedKey);
 
-    if (provider === "gemini" && env.GEMINI_API_KEY?.trim()) {
-      return env.GEMINI_API_KEY.trim();
-    }
-
     throw AppError.badRequest(
-      `No API key configured for ${provider}. Add GEMINI_API_KEY in .env or set a key in Settings.`
+      `No API key configured for ${provider}. Add your API key in Settings.`
     );
   }
 }

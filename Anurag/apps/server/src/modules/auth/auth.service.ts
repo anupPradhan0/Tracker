@@ -33,30 +33,31 @@ function signRefreshToken(payload: AuthPayload) {
   });
 }
 
-async function seedDefaultCategories(userId: string) {
-  await prisma.category.createMany({
-    data: DEFAULT_CATEGORIES.map((c) => ({
-      userId,
-      name: c.name,
-      icon: c.icon,
-      color: c.color,
-      isDefault: true,
-    })),
-    skipDuplicates: true,
-  });
-}
-
 export class AuthService {
   async register(email: string, password: string, name: string) {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) throw AppError.conflict("Email already registered");
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const user = await prisma.user.create({
-      data: { email, passwordHash, name },
-    });
 
-    await seedDefaultCategories(user.id);
+    const user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: { email, passwordHash, name },
+      });
+
+      await tx.category.createMany({
+        data: DEFAULT_CATEGORIES.map((c) => ({
+          userId: created.id,
+          name: c.name,
+          icon: c.icon,
+          color: c.color,
+          isDefault: true,
+        })),
+        skipDuplicates: true,
+      });
+
+      return created;
+    });
 
     const payload: AuthPayload = { userId: user.id, email: user.email, role: user.role };
     return {

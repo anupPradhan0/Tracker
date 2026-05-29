@@ -44,11 +44,20 @@ async function refreshAccessToken(): Promise<string | null> {
   return null;
 }
 
+function isRefreshRequest(url?: string) {
+  return url?.includes("/auth/refresh") ?? false;
+}
+
 apiClient.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
     const original = error.config;
     if (!original || error.response?.status !== 401) {
+      return Promise.reject(error);
+    }
+
+    // Never retry refresh endpoint; prevent infinite 401 → refresh loops
+    if (isRefreshRequest(original.url) || (original as { _retry?: boolean })._retry) {
       return Promise.reject(error);
     }
 
@@ -60,6 +69,7 @@ apiClient.interceptors.response.use(
 
     const token = await refreshPromise;
     if (token) {
+      (original as { _retry?: boolean })._retry = true;
       original.headers.Authorization = `Bearer ${token}`;
       return apiClient(original);
     }
