@@ -269,14 +269,18 @@ export async function updateEntry(
 ): Promise<TrackerPageDto> {
   const day = await getDayForPage(userId, pageId, dayIndex);
 
-  const result = await prisma.trackerEntry.updateMany({
+  const existing = await prisma.trackerEntry.findFirst({
     where: { id: entryId, dayId: day.id },
-    data,
   });
 
-  if (result.count === 0) {
+  if (!existing) {
     throw new ApiError(404, "ENTRY_NOT_FOUND", "Entry not found");
   }
+
+  await prisma.trackerEntry.update({
+    where: { id: entryId },
+    data,
+  });
 
   await prisma.trackerPage.update({
     where: { id: pageId },

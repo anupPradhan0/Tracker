@@ -11,11 +11,17 @@ import { calculatePageTotal, getWeeklyBudget, parseFixedExpenses } from "../util
 import type { TrackerPageDto } from "../types/tracker.js";
 
 function verifyCronAuth(req: Request) {
-  if (env.CRON_SECRET) {
-    const auth = req.headers.authorization;
-    if (auth !== `Bearer ${env.CRON_SECRET}`) {
-      throw new ApiError(401, "UNAUTHORIZED", "Invalid cron secret");
-    }
+  if (!env.CRON_SECRET) {
+    throw new ApiError(
+      503,
+      "CRON_NOT_CONFIGURED",
+      "CRON_SECRET must be set to use cron endpoints"
+    );
+  }
+
+  const auth = req.headers.authorization;
+  if (auth !== `Bearer ${env.CRON_SECRET}`) {
+    throw new ApiError(401, "UNAUTHORIZED", "Invalid cron secret");
   }
 }
 

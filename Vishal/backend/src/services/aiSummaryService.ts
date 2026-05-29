@@ -267,10 +267,9 @@ export async function generateDailySummary(
   };
 
   const current = getDayData(dayIndex);
-  const prev1Idx = dayIndex === 1 ? 7 : dayIndex - 1;
-  const prev2Idx = prev1Idx === 1 ? 7 : prev1Idx - 1;
-  const prev1 = getDayData(prev1Idx);
-  const prev2 = getDayData(prev2Idx);
+  // Only compare earlier days in the same week (no wrap Mon → Sun).
+  const prev1 = dayIndex > 1 ? getDayData(dayIndex - 1) : null;
+  const prev2 = dayIndex > 2 ? getDayData(dayIndex - 2) : null;
 
   if (current.entries.length === 0) {
     return persistSummary(userId, scopeKey, {
@@ -285,24 +284,35 @@ export async function generateDailySummary(
     });
   }
 
+  const comparisonDays = [prev2, prev1, current].filter(
+    (d): d is NonNullable<typeof d> => d !== null
+  );
+  const priorContext =
+    comparisonDays.length > 1
+      ? comparisonDays
+          .slice(0, -1)
+          .map(
+            (d) =>
+              `- ${d.label}: ${formatCurrency(d.total, settings.currency)} (categories: ${JSON.stringify(d.cats)})`
+          )
+          .join("\n")
+      : "No prior days in this week to compare.";
+
   const prompt = `
-Analyze 3-day spending comparison for ${current.label}:
+Analyze spending for ${current.label}${comparisonDays.length > 1 ? " with prior days in the same week" : ""}:
 
 TODAY (${current.label}): ${formatCurrency(current.total, settings.currency)}
 Categories: ${JSON.stringify(current.cats)}
 Entries: ${current.entries.map((e) => `${e.title} ${formatCurrency(e.amount, settings.currency)}`).join(", ")}
 
-PREVIOUS (${prev1.label}): ${formatCurrency(prev1.total, settings.currency)}
-Categories: ${JSON.stringify(prev1.cats)}
-
-TWO DAYS BEFORE (${prev2.label}): ${formatCurrency(prev2.total, settings.currency)}
-Categories: ${JSON.stringify(prev2.cats)}
+Earlier days this week:
+${priorContext}
 
 Daily budget target: ${formatCurrency(dailyBudget, settings.currency)}
 Monthly budget: ${formatCurrency(settings.monthlyBudget, settings.currency)}
 Fixed expenses (monthly): ${formatCurrency(sumFixedExpenses(settings.fixedExpenses), settings.currency)}
 
-Compare trends across the 3 days, category changes, and budget status. Be concise and actionable.
+Compare trends across available days, category changes, and budget status. Be concise and actionable.
 `;
 
   let ai: AIInsightResponse;
@@ -317,7 +327,12 @@ Compare trends across the 3 days, category changes, and budget status. Be concis
           }`,
           insights: [
             `Today: ${formatCurrency(current.total, settings.currency)}`,
-            `Yesterday (${prev1.label}): ${formatCurrency(prev1.total, settings.currency)}`,
+            ...(prev1
+              ? [`Previous (${prev1.label}): ${formatCurrency(prev1.total, settings.currency)}`]
+              : []),
+            ...(prev2
+              ? [`Two days before (${prev2.label}): ${formatCurrency(prev2.total, settings.currency)}`]
+              : []),
           ],
           recommendations: ["Track consistently for better trend analysis"],
         };
