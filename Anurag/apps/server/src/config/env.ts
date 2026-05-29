@@ -23,6 +23,7 @@ const envSchema = z.object({
   MAIL_PASSWORD: z.string().optional(),
   MAIL_FROM: z.string().optional(),
   GEMINI_MODEL: z.string().default("gemini-2.0-flash"),
+  COHERE_MODEL: z.string().default("command-r-plus-08-2024"),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -6,6 +6,7 @@ export enum UserRole {
 export enum AiProvider {
   GEMINI = "gemini",
   OPENAI = "openai",
+  COHERE = "cohere",
 }
 
 export enum SummaryPeriod {

@@ -6,6 +6,8 @@ export function useAnalyticsSummary() {
   return useQuery({
     queryKey: ["analytics", "summary"],
     queryFn: () => apiGet<AnalyticsSummary>("/analytics/summary").then((r) => r.data),
+    staleTime: 60_000,
+    placeholderData: (prev) => prev,
   });
 }
 

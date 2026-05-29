@@ -4,4 +4,4 @@ export interface AIInsightResponse {
   recommendations: string[];
 }
 
-export type AIProviderName = "gemini" | "openai";
+export type AIProviderName = "gemini" | "openai" | "cohere";

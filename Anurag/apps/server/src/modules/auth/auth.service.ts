@@ -1,25 +1,13 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import type { User } from "@prisma/client";
 import { prisma } from "../../infrastructure/prisma/client.js";
 import { env } from "../../config/env.js";
 import { AppError } from "../../common/errors/app-error.js";
 import type { AuthPayload } from "../../common/middleware/auth.js";
 import { DEFAULT_CATEGORIES } from "../../common/constants/default-categories.js";
+import { toUserPublic } from "../../common/utils/user-mapper.js";
 
 const BCRYPT_ROUNDS = 12;
-
-function toUserPublic(user: User) {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    preferredAiProvider: user.preferredAiProvider,
-    currency: user.currency,
-    createdAt: user.createdAt.toISOString(),
-  };
-}
 
 function signAccessToken(payload: AuthPayload) {
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {

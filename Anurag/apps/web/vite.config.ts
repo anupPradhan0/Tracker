@@ -8,6 +8,19 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
+  optimizeDeps: {
+    exclude: ["recharts"],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("recharts")) return "recharts";
+          if (id.includes("node_modules")) return "vendor";
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

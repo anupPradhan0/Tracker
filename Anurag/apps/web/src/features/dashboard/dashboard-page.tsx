@@ -1,44 +1,43 @@
 import { Link } from "react-router-dom";
-import { AlertTriangle, Plus, Sparkles } from "lucide-react";
+import { AlertTriangle, Mail, Plus } from "lucide-react";
 import { formatCurrency } from "@anurag/utils";
 import { useAnalyticsSummary } from "@/hooks/use-analytics";
+import { useSendExpenseEmail } from "@/hooks/use-send-expense-email";
 import { useAuthStore } from "@/stores/auth-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiPost } from "@/lib/api-client";
-import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
 
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user);
-  const { data, isLoading } = useAnalyticsSummary();
+  const { data, isLoading, isError, isFetching } = useAnalyticsSummary();
   const currency = user?.currency ?? "INR";
-
-  const sendEmail = useMutation({
-    mutationFn: () => apiPost("/email/ai-summary", { period: "MONTHLY" }),
-    onSuccess: () => toast.success("AI summary sent to your email!"),
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-28" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const sendEmail = useSendExpenseEmail("MONTHLY");
+  const statsLoading = isLoading && !data;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Hi, {user?.name?.split(" ")[0]}</h1>
         <p className="text-sm text-[var(--color-muted-foreground)]">Your spending overview</p>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <Button asChild className="w-full sm:w-auto">
+          <Link to="/expenses/new">
+            <Plus className="h-4 w-4" />
+            Add expense
+          </Link>
+        </Button>
+        <Button
+          variant="default"
+          className="w-full sm:w-auto"
+          onClick={() => sendEmail.mutate()}
+          disabled={sendEmail.isPending}
+        >
+          <Mail className="h-4 w-4" />
+          {sendEmail.isPending ? "Sending…" : "Send expense report"}
+        </Button>
       </div>
 
       {data?.budgetExceeded && (
@@ -48,77 +47,76 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--color-muted-foreground)]">
-              This month
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">
-              {formatCurrency(data?.monthlyTotal ?? "0", currency)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--color-muted-foreground)]">
-              This week
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">
-              {formatCurrency(data?.weeklyTotal ?? "0", currency)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--color-muted-foreground)]">
-              Remaining budget
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">
-              {data?.remainingBudget != null
-                ? formatCurrency(data.remainingBudget, currency)
-                : "—"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--color-muted-foreground)]">
-              Top category
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-semibold">{data?.topCategories[0]?.name ?? "—"}</p>
-            {data?.topCategories[0] && (
-              <p className="text-sm text-[var(--color-muted-foreground)]">
-                {formatCurrency(data.topCategories[0].total, currency)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {isError && !data && (
+        <p className="text-sm text-[var(--color-muted-foreground)]">
+          Could not load stats. Check that the API and database are running.
+        </p>
+      )}
 
-      <div className="flex flex-wrap gap-2">
-        <Button asChild>
-          <Link to="/expenses/new">
-            <Plus className="h-4 w-4" />
-            Add expense
-          </Link>
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => sendEmail.mutate()}
-          disabled={sendEmail.isPending}
-        >
-          <Sparkles className="h-4 w-4" />
-          Send AI Summary
-        </Button>
+      {isFetching && data && (
+        <p className="text-xs text-[var(--color-muted-foreground)]">Updating…</p>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {statsLoading ? (
+          [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28 rounded-xl" />)
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--color-muted-foreground)]">
+                  This month
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold">
+                  {formatCurrency(data?.monthlyTotal ?? "0", currency)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--color-muted-foreground)]">
+                  This week
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold">
+                  {formatCurrency(data?.weeklyTotal ?? "0", currency)}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--color-muted-foreground)]">
+                  Remaining budget
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold">
+                  {data?.remainingBudget != null
+                    ? formatCurrency(data.remainingBudget, currency)
+                    : "—"}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--color-muted-foreground)]">
+                  Top category
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold">{data?.topCategories[0]?.name ?? "—"}</p>
+                {data?.topCategories[0] && (
+                  <p className="text-sm text-[var(--color-muted-foreground)]">
+                    {formatCurrency(data.topCategories[0].total, currency)}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <Card>
@@ -126,7 +124,13 @@ export function DashboardPage() {
           <CardTitle className="text-base">Recent activity</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {data?.recentExpenses?.length ? (
+          {statsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : data?.recentExpenses?.length ? (
             data.recentExpenses.map((e) => (
               <div key={e.id} className="flex items-center justify-between text-sm">
                 <div>

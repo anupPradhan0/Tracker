@@ -15,6 +15,7 @@ enum UserRole {
 enum AiProvider {
   gemini
   openai
+  cohere
 }
 
 enum SummaryPeriod {
@@ -40,6 +41,8 @@ model User {
   role                UserRole     @default(USER)
   currency            String       @default("INR")
   preferredAiProvider AiProvider   @default(gemini)
+  reportSenderEmail   String?
+  reportReceiverEmail String?
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 
