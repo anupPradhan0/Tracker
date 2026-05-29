@@ -11,9 +11,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Sparkles } from "lucide-react";
+import { Mail, Sparkles } from "lucide-react";
 import { formatCurrency } from "@anurag/utils";
 import { useAnalyticsTrends, useAnalyticsByCategory } from "@/hooks/use-analytics";
+import { useSendExpenseEmail } from "@/hooks/use-send-expense-email";
 import { useAuthStore } from "@/stores/auth-store";
 import { apiPost } from "@/lib/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ export function AnalyticsPage() {
   const currency = useAuthStore((s) => s.user?.currency) ?? "INR";
   const { data: trends, isLoading: trendsLoading } = useAnalyticsTrends();
   const { data: byCategory, isLoading: catLoading } = useAnalyticsByCategory();
+  const sendEmail = useSendExpenseEmail("MONTHLY");
 
   const generateAi = useMutation({
     mutationFn: (period: "WEEKLY" | "MONTHLY") =>
@@ -54,12 +56,21 @@ export function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="space-y-3">
         <h1 className="text-2xl font-semibold">Analytics</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button
-            size="sm"
+            className="w-full sm:w-auto"
+            onClick={() => sendEmail.mutate()}
+            disabled={sendEmail.isPending}
+          >
+            <Mail className="h-4 w-4" />
+            {sendEmail.isPending ? "Sending…" : "Send expense report"}
+          </Button>
+          <Button
+            size="default"
             variant="outline"
+            className="w-full sm:w-auto"
             onClick={() => generateAi.mutate("WEEKLY")}
             disabled={generateAi.isPending}
           >
@@ -67,7 +78,8 @@ export function AnalyticsPage() {
             Weekly AI
           </Button>
           <Button
-            size="sm"
+            size="default"
+            className="w-full sm:w-auto"
             onClick={() => generateAi.mutate("MONTHLY")}
             disabled={generateAi.isPending}
           >

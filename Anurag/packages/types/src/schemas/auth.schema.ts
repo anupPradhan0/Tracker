@@ -17,7 +17,7 @@ export const loginSchema = z.object({
 export const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   currency: z.string().length(3).optional(),
-  preferredAiProvider: z.enum(["gemini", "openai"]).optional(),
+  preferredAiProvider: z.enum(["gemini", "openai", "cohere"]).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

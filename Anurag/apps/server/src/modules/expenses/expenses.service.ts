@@ -155,6 +155,15 @@ export class ExpensesService {
     });
     return result._sum.amount?.toString() ?? "0";
   }
+
+  async listInRange(userId: string, start: Date, end: Date) {
+    const items = await prisma.expense.findMany({
+      where: { userId, date: { gte: start, lte: end } },
+      include: { category: true },
+      orderBy: { date: "desc" },
+    });
+    return items.map(mapExpense);
+  }
 }
 
 export const expensesService = new ExpensesService();

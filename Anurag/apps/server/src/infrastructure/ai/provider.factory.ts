@@ -2,6 +2,7 @@ import type { AiProvider } from "@prisma/client";
 import type { AIProviderAdapter } from "./provider.interface.js";
 import { GeminiProvider } from "./gemini.provider.js";
 import { OpenAIProvider } from "./openai.provider.js";
+import { CohereProvider } from "./cohere.provider.js";
 import { AppError } from "../../common/errors/app-error.js";
 
 export function createAIProvider(provider: AiProvider, apiKey: string): AIProviderAdapter {
@@ -10,6 +11,8 @@ export function createAIProvider(provider: AiProvider, apiKey: string): AIProvid
       return new GeminiProvider(apiKey);
     case "openai":
       return new OpenAIProvider(apiKey);
+    case "cohere":
+      return new CohereProvider(apiKey);
     default:
       throw AppError.badRequest(`Unsupported AI provider: ${provider}`);
   }

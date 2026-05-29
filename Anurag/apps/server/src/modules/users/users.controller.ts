@@ -1,21 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
 import { usersService } from "./users.service.js";
 import { sendSuccess } from "../../common/utils/response.js";
+import { toUserPublic } from "../../common/utils/user-mapper.js";
 import type { AiProvider } from "@prisma/client";
 
 export class UsersController {
   updateProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = await usersService.updateProfile(req.user!.userId, req.body);
-      sendSuccess(res, {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        preferredAiProvider: user.preferredAiProvider,
-        currency: user.currency,
-        createdAt: user.createdAt.toISOString(),
-      });
+      sendSuccess(res, toUserPublic(user));
     } catch (e) {
       next(e);
     }
@@ -48,6 +41,24 @@ export class UsersController {
     try {
       await usersService.deleteAiKey(req.user!.userId, req.params.provider as AiProvider);
       sendSuccess(res, { deleted: true });
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  getEmailSettings = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const settings = await usersService.getEmailSettings(req.user!.userId);
+      sendSuccess(res, settings);
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  updateEmailSettings = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const settings = await usersService.updateEmailSettings(req.user!.userId, req.body);
+      sendSuccess(res, settings);
     } catch (e) {
       next(e);
     }

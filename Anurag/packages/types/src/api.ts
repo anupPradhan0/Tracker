@@ -34,6 +34,8 @@ export interface UserPublic {
   role: string;
   preferredAiProvider: string;
   currency: string;
+  reportSenderEmail: string | null;
+  reportReceiverEmail: string | null;
   createdAt: string;
 }
 

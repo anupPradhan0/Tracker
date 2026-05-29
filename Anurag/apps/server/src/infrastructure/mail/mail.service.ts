@@ -15,10 +15,10 @@ export class MailService {
     });
   }
 
-  async sendHtml(to: string, subject: string, html: string) {
+  async sendHtml(to: string, subject: string, html: string, from?: string) {
     const transporter = this.getTransporter();
     await transporter.sendMail({
-      from: env.MAIL_FROM ?? env.MAIL_USER,
+      from: from ?? env.MAIL_FROM ?? env.MAIL_USER,
       to,
       subject,
       html,

@@ -9,7 +9,10 @@
     "db:migrate": "pnpm --filter @anurag/server db:migrate",
     "db:push": "pnpm --filter @anurag/server db:push",
     "db:studio": "pnpm --filter @anurag/server db:studio",
-    "db:seed": "pnpm --filter @anurag/server db:seed"
+    "db:seed": "pnpm --filter @anurag/server db:seed",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:up:all": "docker compose --profile app up -d --build"
   },
   "engines": {
     "node": ">=20"

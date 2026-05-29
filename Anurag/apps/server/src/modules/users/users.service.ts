@@ -13,7 +13,7 @@ export class UsersService {
 
   async getAiKeyStatus(userId: string) {
     const keys = await prisma.userAiKey.findMany({ where: { userId } });
-    const providers: AiProvider[] = ["gemini", "openai"];
+    const providers: AiProvider[] = ["gemini", "openai", "cohere"];
     return providers.map((provider) => {
       const key = keys.find((k) => k.provider === provider);
       return {
@@ -37,6 +37,36 @@ export class UsersService {
 
   async deleteAiKey(userId: string, provider: AiProvider) {
     await prisma.userAiKey.deleteMany({ where: { userId, provider } });
+  }
+
+  async getEmailSettings(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw AppError.notFound();
+    return {
+      reportSenderEmail: user.reportSenderEmail,
+      reportReceiverEmail: user.reportReceiverEmail,
+    };
+  }
+
+  async updateEmailSettings(
+    userId: string,
+    data: { reportSenderEmail?: string | null; reportReceiverEmail?: string | null }
+  ) {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.reportSenderEmail !== undefined && {
+          reportSenderEmail: data.reportSenderEmail,
+        }),
+        ...(data.reportReceiverEmail !== undefined && {
+          reportReceiverEmail: data.reportReceiverEmail,
+        }),
+      },
+    });
+    return {
+      reportSenderEmail: user.reportSenderEmail,
+      reportReceiverEmail: user.reportReceiverEmail,
+    };
   }
 
   async getDecryptedAiKey(userId: string, provider: AiProvider): Promise<string> {
